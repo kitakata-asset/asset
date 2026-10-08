@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>AssetFlow - 資産管理</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRious (完全クライアント動作) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+    :root {
+      --apple-bg: #F5F5F7;
+      --apple-card: #FFFFFF;
+      --apple-blue: #0071E3;
+      --apple-text-primary: #1D1D1F;
+      --apple-text-secondary: #86868B;
+      --apple-border: rgba(0, 0, 0, 0.08);
+      --apple-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Hiragino Kaku Gothic ProN", sans-serif;
+      background-color: var(--apple-bg);
+      color: var(--apple-text-primary);
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 84px;
+    }
+    @media (min-width: 768px) {
+      body { padding-bottom: 48px; }
+    }
+    .apple-card {
+      background: var(--apple-card);
+      border: 1px solid var(--apple-border);
+      border-radius: 20px;
+      box-shadow: var(--apple-card-shadow);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .apple-card:hover {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    }
+    .ios-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+    .ios-switch input { opacity: 0; width: 0; height: 0; }
+    .ios-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #E5E5EA;
+      transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 34px;
+    }
+    .ios-slider:before {
+      position: absolute;
+      content: "";
+      height: 22px; width: 22px;
+      left: 3px; bottom: 3px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .ios-slider { background-color: var(--apple-blue); }
+    input:checked + .ios-slider:before { transform: translateX(22px); }
+  </style>
+</head>
+<body class="selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/5">
+    <div class="max-w-5xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-semibold tracking-tight text-slate-900">AssetFlow</h1>
+          <p class="text-[10px] text-slate-400 font-medium">Personal & Household Wealth</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- 同期QR表示ボタン -->
+        <button onclick="openDataTransferModal()" class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 hover:bg-slate-200 transition shadow-xs border border-slate-200/70">
+          <i data-lucide="qr-code" class="w-3.5 h-3.5 text-blue-600"></i>
+          <span>同期QR</span>
+        </button>
+
+        <!-- Teams貼付取込ボタン -->
+        <button onclick="openPasteImportModal()" class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-xs">
+          <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+          <span>Teams貼付</span>
+        </button>
+
+        <div id="headerModeBadge" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200/60 transition">
+          <i data-lucide="user" class="w-3.5 h-3.5" id="headerModeIcon"></i>
+          <span id="headerModeText">単身モード</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 1. 送信用QRコードモーダル -->
+  <div id="dataTransferModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-black/10 relative text-center space-y-4 max-h-[92vh] overflow-y-auto">
+      <button onclick="closeDataTransferModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+        <i data-lucide="smartphone" class="w-6 h-6"></i>
+      </div>
+
+      <div>
+        <h3 class="text-base font-bold text-slate-900">スマホ連携QRコード</h3>
+        <p class="text-xs text-slate-500 mt-0.5" id="qrInstructionText">
+          スマホカメラをかざすとサイトが開き、最新残高が自動反映されます。
+        </p>
+      </div>
+
+      <!-- QRコード描画エリア -->
+      <div class="bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-inner flex flex-col items-center justify-center">
+        <canvas id="qrCodeCanvas" class="w-60 h-60 rounded-lg bg-white"></canvas>
+        <span class="text-[11px] font-medium text-slate-500 mt-2 flex items-center" id="qrTypeBadge">
+          <i data-lucide="globe" class="w-3.5 h-3.5 mr-1 text-blue-600"></i>Webサイト連動コード
+        </span>
+      </div>
+
+      <!-- 公開URL設定 -->
+      <div class="text-left bg-slate-50 p-3 rounded-2xl border border-black/5 space-y-2">
+        <label class="text-[11px] font-bold text-slate-700 block flex items-center justify-between">
+          <span>あなたのGitHub Pages URL</span>
+          <span class="text-[10px] text-blue-600 font-normal">スマホで開くURL</span>
+        </label>
+        <input type="url" id="webAppUrlInput" placeholder="https://<username>.github.io/asset/" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-blue-500 font-mono">
+        <button onclick="saveWebAppUrl()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium py-1.5 rounded-lg text-xs transition">
+          URLを保存してQR更新
+        </button>
+      </div>
+
+      <!-- 文字列コピーボタン -->
+      <div class="space-y-2 text-left">
+        <button onclick="copyCurrentSyncString()" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center border border-blue-200/60">
+          <i data-lucide="copy" class="w-3.5 h-3.5 mr-1.5"></i>同期テキストをコピー（Teams送信用）
+        </button>
+      </div>
+
+      <button onclick="closeDataTransferModal()" class="w-full bg-slate-900 hover:bg-black text-white font-medium py-2.5 rounded-xl text-xs transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Teams・テキストコード貼付取込モーダル -->
+  <div id="pasteImportModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-black/10 relative text-left space-y-4">
+      <button onclick="closePasteImportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <i data-lucide="clipboard-paste" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Teamsテキストから取込</h3>
+          <p class="text-xs text-slate-500">Teamsからコピーした同期コードを貼り付けます</p>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-slate-700 block mb-1">同期テキストコード</label>
+        <textarea id="pasteDataInput" rows="3" placeholder="Teamsからコピーした文字列（AF1:...）またはURLを貼り付け..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs focus:outline-blue-500 font-mono text-slate-700"></textarea>
+      </div>
+
+      <div class="flex space-x-2 pt-1">
+        <button onclick="applyPastedData()" class="grow bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-xs">
+          <i data-lucide="arrow-down-circle" class="w-4 h-4 mr-1.5"></i>このデータを反映して最新化
+        </button>
+        <button onclick="closePasteImportModal()" class="px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl text-xs transition">
+          キャンセル
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- 1. ダッシュボード タブ -->
+    <section id="tab-dashboard" class="space-y-6">
+      <div class="flex items-center justify-between px-1">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">総資産サマリー</span>
+          <div class="text-xs text-slate-500 font-medium mt-0.5" id="dashScopeDescription">現在「単身モード（本人のみ）」の資産を表示中</div>
+        </div>
+        <button onclick="switchTab('update')" class="text-xs text-blue-600 font-medium hover:underline flex items-center">
+          <i data-lucide="settings-2" class="w-3.5 h-3.5 mr-1"></i>残高更新・設定
+        </button>
+      </div>
+
+      <!-- メイン KPI カード群 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div class="apple-card p-5 col-span-2 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" id="cardTotalTitle">本人 総資産計</span>
+            <span class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 flex items-center" id="dashModeIndicatorBadge">
+              <i data-lucide="user" class="w-3 h-3 mr-1"></i>単身データ
+            </span>
+          </div>
+          <div class="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 mt-2" id="dashTotalAsset">¥0</div>
+          <div class="text-xs text-slate-400 mt-2 flex items-center">
+            <span id="wifeShareSubtext" class="hidden font-medium text-purple-600 mr-2"></span>
+            最終記録日: <span id="dashLastSavedDate" class="ml-1 font-semibold text-slate-700">-</span>
+          </div>
+        </div>
+
+        <div class="apple-card p-5">
+          <span class="text-xs font-semibold text-slate-400">証券口座 (投資)</span>
+          <div class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900 mt-2" id="dashInvestTotal">¥0</div>
+          <div class="text-xs font-medium text-blue-600 mt-1" id="dashInvestRatio">0.0%</div>
+        </div>
+
+        <div class="apple-card p-5">
+          <span class="text-xs font-semibold text-slate-400">銀行口座 (現預金)</span>
+          <div class="text-xl md:text-2xl font-semibold tracking-tight text-slate-900 mt-2" id="dashCashTotal">¥0</div>
+          <div class="text-xs font-medium text-slate-500 mt-1" id="dashCashRatio">0.0%</div>
+        </div>
+      </div>
+
+      <!-- チャート群 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="apple-card p-5 md:col-span-2">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
+              </div>
+              <h2 class="font-semibold text-slate-800 text-sm tracking-tight" id="trendChartTitle">日別・資産推移（単身データ連動）</h2>
+            </div>
+            <span class="text-[11px] text-slate-400 font-medium" id="chartPointCountBadge">全0回の記録</span>
+          </div>
+          <div class="relative h-64">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="apple-card p-5">
+          <div class="flex items-center space-x-2 mb-4">
+            <div class="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center">
+              <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i>
+            </div>
+            <h2 class="font-semibold text-slate-800 text-sm tracking-tight">資産配分比率</h2>
+          </div>
+          <div class="relative h-64 flex items-center justify-center">
+            <canvas id="allocationChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 口座一覧 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="apple-card p-5">
+          <div class="flex justify-between items-center pb-3 border-b border-black/5 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+              <h3 class="font-semibold text-slate-900 text-sm">証券口座・投資資産</h3>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600" id="badgeInvestSum">¥0</span>
+          </div>
+          <div class="divide-y divide-black/5" id="investBreakdownList"></div>
+        </div>
+
+        <div class="apple-card p-5">
+          <div class="flex justify-between items-center pb-3 border-b border-black/5 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h3 class="font-semibold text-slate-900 text-sm">銀行口座・現預金</h3>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700" id="badgeCashSum">¥0</span>
+          </div>
+          <div class="divide-y divide-black/5" id="cashBreakdownList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 資産更新・口座設定・世帯切替 タブ -->
+    <section id="tab-update" class="hidden space-y-6">
+
+      <!-- 世帯管理モード切替トグル -->
+      <div class="apple-card p-5 bg-gradient-to-br from-white via-white to-slate-50 border-2 border-slate-200/80">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start space-x-3.5">
+            <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h2 class="font-semibold text-slate-900 text-base">単身 / 世帯モード切替</h2>
+                <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">独立グラフ・履歴保持</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                チェックを入れると「世帯モード」になり、配偶者（妻）の口座を含む世帯専用の資産履歴・推移グラフへ切り替わります。
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-3 self-end sm:self-center bg-white p-2 rounded-2xl border border-black/5 shadow-xs">
+            <span class="text-xs font-bold text-slate-700" id="modeSwitchLabel">単身モード</span>
+            <label class="ios-switch">
+              <input type="checkbox" id="householdModeToggle" onchange="toggleHouseholdMode(this.checked)">
+              <span class="ios-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 残高の直接更新フォーム（日別履歴保存ボタン付き） -->
+      <div class="apple-card p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-black/5 mb-4 gap-3">
+          <div>
+            <h2 class="font-semibold text-slate-900 text-base flex items-center">
+              <span>口座残高の直接更新</span>
+              <span class="ml-2 text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-semibold" id="inputFormModeBadge">単身データへ保存</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">数値を更新して「記録を保存」を押すと、現在選択中のモードの履歴に保存されます。</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+              <input type="date" id="recordDatePicker" class="text-xs font-medium text-slate-700 bg-transparent focus:outline-none">
+            </div>
+            <button onclick="saveDirectInputValues()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-xs flex items-center shrink-0">
+              <i data-lucide="check" class="w-3.5 h-3.5 mr-1"></i>記録を保存
+            </button>
+            <button onclick="openDataTransferModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-medium transition flex items-center shrink-0">
+              <i data-lucide="qr-code" class="w-3.5 h-3.5 mr-1 text-blue-300"></i>同期QR
+            </button>
+          </div>
+        </div>
+
+        <div id="directInputFormContainer" class="space-y-3"></div>
+      </div>
+
+      <!-- 履歴データ管理テーブル（アクティブなモードの履歴を表示） -->
+      <div class="apple-card p-5">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="font-semibold text-slate-900 text-base flex items-center">
+              <span>保存済みの日別資産履歴</span>
+              <span class="ml-2 text-[11px] font-bold text-slate-500" id="historyTableCurrentModeText">（単身モード履歴）</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">保存ボタンを押すごとに記録された過去のスナップショット一覧です。</p>
+          </div>
+          <button onclick="clearHistoryConfirm()" class="text-xs text-slate-400 hover:text-rose-600 transition flex items-center">
+            <i data-lucide="trash" class="w-3 h-3 mr-1"></i>現在のモードの履歴をリセット
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider border-b border-black/5">
+              <tr>
+                <th class="py-2.5 px-3">記録日付</th>
+                <th class="py-2.5 px-3">総資産計</th>
+                <th class="py-2.5 px-3">証券 (投資)</th>
+                <th class="py-2.5 px-3">銀行 (現金)</th>
+                <th class="py-2.5 px-3 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody" class="divide-y divide-black/5"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 口座の編集・新規追加・分類管理 -->
+      <div class="apple-card p-5">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="font-semibold text-slate-900 text-base">口座設定・分類管理</h2>
+            <p class="text-xs text-slate-400 mt-0.5">口座名、所有者（本人/妻）、分類（証券/銀行）をいつでも編集できます。</p>
+          </div>
+          <button onclick="addNewAccountRow()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition flex items-center">
+            <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i>口座を追加
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider border-b border-black/5">
+              <tr>
+                <th class="py-2.5 px-3">口座名称</th>
+                <th class="py-2.5 px-3">所有者</th>
+                <th class="py-2.5 px-3">分類</th>
+                <th class="py-2.5 px-3 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="accountConfigTableBody" class="divide-y divide-black/5"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 出口戦略 & 将来シミュレーション タブ -->
+    <section id="tab-exit" class="hidden space-y-6">
+      <div class="apple-card p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-black/5 mb-4 gap-2">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="font-semibold text-slate-900 text-base">将来資産推移 & 出口戦略シミュレーション</h2>
+              <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full" id="exitCurrentModeBadge">単身資産連動</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">最新の登録残高をスタート地点とし、36歳〜60歳（2026年〜2050年）の複利運用モデルと4%取崩しをシミュレート</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="syncExitWithCurrentAssets()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-xl transition flex items-center">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1"></i>最新口座残高を反映
+            </button>
+            <button onclick="resetExitAssumptions()" class="text-xs text-slate-400 hover:text-slate-600 flex items-center p-1.5">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="relative h-72 mb-6">
+          <canvas id="exitProjectionChart"></canvas>
+        </div>
+
+        <!-- パラメータ入力フォーム & 更新ボタン -->
+        <div class="bg-slate-50/80 p-4 md:p-5 rounded-2xl border border-black/5 space-y-4 mb-6">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-slate-700 flex items-center">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>シミュレーション前提パラメータ
+            </span>
+            <span class="text-[10px] text-slate-400">※数字を変更して更新ボタンを押すと即座に再立案されます</span>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">現在の投資元本 (円)</label>
+              <input type="text" id="exitParamCurrentInvest" value="19,062,195" oninput="formatCommaInput(this)" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">想定年利 (%)</label>
+              <input type="number" id="exitParamReturn" step="0.1" value="5.0" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">年間投資額 初期 (円)</label>
+              <input type="text" id="exitParamInvestStart" value="3,000,000" oninput="formatCommaInput(this)" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">年間増額ピッチ (円)</label>
+              <input type="text" id="exitParamInvestStep" value="200,000" oninput="formatCommaInput(this)" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">現金クッション (円)</label>
+              <input type="text" id="exitParamCash" value="7,127,112" oninput="formatCommaInput(this)" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">インフレ率 (%)</label>
+              <input type="number" id="exitParamInflation" step="0.1" value="2.0" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-blue-500">
+            </div>
+          </div>
+
+          <!-- 更新ボタン -->
+          <button onclick="recalculateExitStrategy(true)" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center shadow-xs">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1.5"></i>この設定で出口戦略を再計算・更新
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+            <span class="text-xs font-semibold text-blue-900 block">50歳到達時（サイドFIRE目安）</span>
+            <div class="mt-2 text-2xl font-bold text-slate-900" id="exitSim50Asset">¥0</div>
+            <div class="mt-1 text-xs text-slate-600">
+              年4%取崩し: <span class="font-bold text-blue-600" id="exitSim50Yearly">¥0</span> /年
+              （月額 約<span class="font-bold text-blue-600" id="exitSim50Monthly">¥0</span>）
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">※インフレ調整後の実質月額は約<span id="exitSim50RealMonthly">¥0</span>相当</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+            <span class="text-xs font-semibold text-emerald-900 block">60歳到達時（完全リタイア目安）</span>
+            <div class="mt-2 text-2xl font-bold text-slate-900" id="exitSim60Asset">¥0</div>
+            <div class="mt-1 text-xs text-slate-600">
+              年4%取崩し: <span class="font-bold text-emerald-600" id="exitSim60Yearly">¥0</span> /年
+              （月額 約<span class="font-bold text-emerald-600" id="exitSim60Monthly">¥0</span>）
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">※インフレ調整後の実質月額は約<span id="exitSim60RealMonthly">¥0</span>相当</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. AIライフプラン & 居住地・教育診断 タブ -->
+    <section id="tab-ai" class="hidden space-y-6">
+      <div class="apple-card p-5">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <h2 class="font-semibold text-slate-900 text-base">同世代（30代後半）における資産ポジション</h2>
+            <p class="text-xs text-slate-400 mt-0.5">金融広報中央委員会「家計の金融行動に関する世論調査」統計比較（現在資産連動）</p>
+          </div>
+          <span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-full border border-amber-200" id="aiPositionBadge">
+            上位 約7%（アッパーマス層）
+          </span>
+        </div>
+        <div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden relative">
+          <div id="aiPositionBar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-700" style="width: 93%;"></div>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-400 mt-2 font-medium">
+          <span>同世代 中央値: 約300万円</span>
+          <span>同世代 平均値: 約750万円</span>
+          <span class="text-blue-600 font-bold" id="aiCurrentAssetPositionText">現在: 約2,619万円 (上位7%)</span>
+        </div>
+      </div>
+
+      <div class="apple-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-semibold text-slate-900 text-base">世帯プロフィール & ライフプラン設定</h2>
+          <span class="text-[10px] text-slate-400">数値を入力して「診断を実行」を押してください</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">本人 年収 (税込)</label>
+            <input type="text" id="aiIncomeSelf" value="8,500,000" oninput="formatCommaInput(this)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">配偶者 年収 (税込)</label>
+            <input type="text" id="aiIncomeSpouse" value="4,000,000" oninput="formatCommaInput(this)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">居住エリア</label>
+            <select id="aiResidenceArea" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500">
+              <option value="tokyo_central">東京都心・城南・城西</option>
+              <option value="tokyo_suburb" selected>東京市部・神奈川・埼玉・千葉</option>
+              <option value="kansai">近畿圏（大阪・兵庫・京都）</option>
+              <option value="other">その他中核都市・地方</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">お子様の人数・状況</label>
+            <select id="aiChildren" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-blue-500">
+              <option value="0">子どもなし</option>
+              <option value="1" selected>子ども1人 (未就学〜小学生)</option>
+              <option value="2">子ども2人</option>
+              <option value="3">子ども3人以上</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-50/70 rounded-2xl border border-black/5 space-y-3">
+          <div class="flex items-center space-x-4">
+            <span class="text-xs font-semibold text-slate-700">住宅の形態:</span>
+            <label class="flex items-center space-x-1.5 text-xs text-slate-700 cursor-pointer">
+              <input type="radio" name="housingType" value="rent" checked onchange="toggleHousingFields('rent')">
+              <span>賃貸（更新料計算あり）</span>
+            </label>
+            <label class="flex items-center space-x-1.5 text-xs text-slate-700 cursor-pointer">
+              <input type="radio" name="housingType" value="own" onchange="toggleHousingFields('own')">
+              <span>持ち家（住宅ローンあり）</span>
+            </label>
+          </div>
+
+          <div id="housingRentFields" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">月額家賃 (共益費込)</label>
+              <input type="text" id="aiRentMonthly" value="160,000" oninput="formatCommaInput(this); updateRenewalField();" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">2年ごと更新料 (自動換算: 家賃1ヶ月分)</label>
+              <input type="text" id="aiRentRenewal" value="160,000" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold cursor-not-allowed">
+            </div>
+          </div>
+
+          <div id="housingOwnFields" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">住宅ローン月額返済額</label>
+              <input type="text" id="aiMortgageMonthly" value="140,000" oninput="formatCommaInput(this)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-blue-500">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">完済予定年月 / 残年数</label>
+              <input type="text" id="aiMortgageYears" value="2055年 (残り29年)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-500 block mb-1">フリー相談事項・ライフプランの要望</label>
+          <textarea id="aiFreeText" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs focus:outline-blue-500 placeholder:text-slate-400" placeholder="例: 50歳までにサイドFIREしたい、中学受験を検討している等..."></textarea>
+        </div>
+
+        <!-- 診断実行ボタン -->
+        <button onclick="runAiDiagnosis(true)" class="w-full py-3 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-semibold transition flex items-center justify-center shadow-xs">
+          <i data-lucide="sparkles" class="w-4 h-4 mr-1.5 text-amber-300"></i>最新のデータと入力値でAI総合診断を実行・更新
+        </button>
+      </div>
+
+      <div id="aiResultCard" class="apple-card p-5 space-y-4">
+        <h3 class="font-semibold text-slate-900 text-base flex items-center">
+          <i data-lucide="brain-circuit" class="w-4 h-4 mr-2 text-blue-600"></i>AI総合診断レポート
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="aiAdviceCards"></div>
+        <div id="housingAdviceBox" class="p-4 rounded-2xl bg-slate-50 border border-black/5"></div>
+        <div id="educationAdviceBox" class="p-4 rounded-2xl bg-blue-50/40 border border-blue-100"></div>
+      </div>
+    </section>
+
+    <!-- 5. ふるさと納税シミュレーター タブ -->
+    <section id="tab-furusato" class="hidden space-y-6">
+      <div class="apple-card p-5">
+        <h2 class="font-semibold text-slate-900 text-base mb-1">ふるさと納税 限度額シミュレーター</h2>
+        <p class="text-xs text-slate-400 mb-4">AI診断に入力された給与年収と家族構成から控除上限額（自己負担2,000円）の目安を自動計算します。</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div class="p-4 rounded-2xl bg-blue-50/60 border border-blue-100">
+            <span class="text-xs font-semibold text-blue-900 block">本人 控除限度額 (目安)</span>
+            <div class="text-2xl font-bold text-slate-900 mt-2" id="furusatoSelfLimit">¥0</div>
+            <p class="text-[11px] text-slate-500 mt-1">年収 <span id="furusatoSelfIncomeDisplay">0</span> 万円の場合</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-purple-50/60 border border-purple-100">
+            <span class="text-xs font-semibold text-purple-900 block">配偶者 控除限度額 (目安)</span>
+            <div class="text-2xl font-bold text-slate-900 mt-2" id="furusatoSpouseLimit">¥0</div>
+            <p class="text-[11px] text-slate-500 mt-1">年収 <span id="furusatoSpouseIncomeDisplay">0</span> 万円の場合</p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 text-center">
+          <span class="text-xs font-semibold text-emerald-900 block">世帯合計 ふるさと納税枠</span>
+          <div class="text-3xl font-extrabold text-emerald-700 mt-1" id="furusatoTotalLimit">¥0</div>
+          <p class="text-xs text-slate-500 mt-1">実質自己負担 4,000円（2名分）で上記全額の返礼品を受領可能</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ボトムタブナビゲーション -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-t border-black/5">
+    <div class="max-w-md mx-auto grid grid-cols-5 h-16">
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center text-blue-600 transition">
+        <i data-lucide="layout-dashboard" class="w-5 h-5 mb-1"></i>
+        <span class="text-[10px] font-medium">概観</span>
+      </button>
+      <button onclick="switchTab('update')" id="nav-update" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
+        <i data-lucide="sliders-horizontal" class="w-5 h-5 mb-1"></i>
+        <span class="text-[10px] font-medium">更新設定</span>
+      </button>
+      <button onclick="switchTab('exit')" id="nav-exit" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
+        <i data-lucide="trending-up" class="w-5 h-5 mb-1"></i>
+        <span class="text-[10px] font-medium">出口戦略</span>
+      </button>
+      <button onclick="switchTab('ai')" id="nav-ai" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
+        <i data-lucide="sparkles" class="w-5 h-5 mb-1"></i>
+        <span class="text-[10px] font-medium">AI診断</span>
+      </button>
+      <button onclick="switchTab('furusato')" id="nav-furusato" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
+        <i data-lucide="gift" class="w-5 h-5 mb-1"></i>
+        <span class="text-[10px] font-medium">納税</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- JavaScript アプリケーションロジック -->
+  <script>
+    // --- 初期データ構造 ---
+    let appState = {
+      isHouseholdMode: false,
+      webAppUrl: "",
+      accounts: [
+        { id: "inv_1", name: "積み立てNISA", type: "securities", owner: "self", balance: 4994474 },
+        { id: "inv_2", name: "国内株式", type: "securities", owner: "self", balance: 7385250 },
+        { id: "inv_3", name: "持株会", type: "securities", owner: "self", balance: 4227189 },
+        { id: "inv_4", name: "確定拠出年金", type: "securities", owner: "self", balance: 1414025 },
+        { id: "inv_5", name: "iDeCo", type: "securities", owner: "self", balance: 951326 },
+        { id: "inv_6", name: "米国株式", type: "securities", owner: "self", balance: 93931 },
+        { id: "csh_1", name: "みずほ銀行", type: "bank", owner: "self", balance: 1376981 },
+        { id: "csh_2", name: "三井住友銀行+JRE", type: "bank", owner: "self", balance: 3443143 },
+        { id: "csh_3", name: "楽天銀行", type: "bank", owner: "self", balance: 1681287 },
+        { id: "csh_4", name: "たんす預金", type: "bank", owner: "self", balance: 380000 },
+        { id: "csh_5", name: "買付可能資産(野村)", type: "bank", owner: "self", balance: 242701 },
+        { id: "inv_w1", name: "妻 つみたてNISA", type: "securities", owner: "wife", balance: 1200000 },
+        { id: "csh_w1", name: "妻 預金口座", type: "bank", owner: "wife", balance: 1800000 }
+      ],
+      // 単身用 日別履歴
+      historySelf: [
+        { date: "2023/06", total: 11920000, invest: 7000000, cash: 4920000 },
+        { date: "2023/11", total: 13830000, invest: 8500000, cash: 5330000 },
+        { date: "2024/04", total: 14050000, invest: 8900000, cash: 5150000 },
+        { date: "2024/09", total: 15240000, invest: 9800000, cash: 5440000 },
+        { date: "2025/03", total: 18080000, invest: 12000000, cash: 6080000 },
+        { date: "2025/08", total: 19720000, invest: 13500000, cash: 6220000 },
+        { date: "2026/01", total: 23520000, invest: 16500000, cash: 7020000 },
+        { date: "2026/09/17", total: 26190000, invest: 19062195, cash: 7127112 }
+      ],
+      // 世帯用 日別履歴
+      historyHousehold: [
+        { date: "2023/06", total: 13920000, invest: 7600000, cash: 6320000 },
+        { date: "2023/11", total: 16030000, invest: 9200000, cash: 6830000 },
+        { date: "2024/04", total: 16450000, invest: 9700000, cash: 6750000 },
+        { date: "2024/09", total: 17840000, invest: 10700000, cash: 7140000 },
+        { date: "2025/03", total: 20880000, invest: 13000000, cash: 7880000 },
+        { date: "2025/08", total: 22620000, invest: 14600000, cash: 8020000 },
+        { date: "2026/01", total: 26520000, invest: 17700000, cash: 8820000 },
+        { date: "2026/09/17", total: 29190000, invest: 20262195, cash: 8927112 }
+      ],
+      exitParams: {
+        returnRate: 5.0,
+        investStart: 3000000,
+        investStep: 200000,
+        cashFloor: 7127112,
+        inflationRate: 2.0
+      }
+    };
+
+    let trendChart = null;
+    let allocChart = null;
+    let exitChart = null;
+
+    function getActiveHistory() {
+      return appState.isHouseholdMode ? appState.historyHousehold : appState.historySelf;
+    }
+
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}/${m}/${d}`;
+    }
+
+    function getSyncPayloadCode() {
+      const modeFlag = appState.isHouseholdMode ? "1" : "0";
+      const balances = appState.accounts.map(a => a.balance).join(",");
+      return `AF1:${modeFlag}:${balances}`;
+    }
+
+    function decodeUltraCompactSyncCode(text) {
+      if (!text.startsWith("AF1:")) return false;
+      const parts = text.substring(4).split(":");
+      if (parts.length < 2) return false;
+
+      const isHousehold = parts[0] === "1";
+      const balList = parts[1].split(",").map(v => parseFloat(v) || 0);
+
+      for (let i = 0; i < balList.length && i < appState.accounts.length; i++) {
+        appState.accounts[i].balance = balList[i];
+      }
+      appState.isHouseholdMode = isHousehold;
+      document.getElementById('householdModeToggle').checked = isHousehold;
+      return true;
+    }
+
+    function importPayloadData(inputStr) {
+      let clean = inputStr.trim();
+      if (clean.includes("#data=")) {
+        clean = clean.split("#data=")[1].split("&")[0];
+      }
+
+      if (decodeUltraCompactSyncCode(clean)) {
+        finishImport();
+        return true;
+      }
+
+      try {
+        const decoded = decodeURIComponent(escape(atob(clean)));
+        if (decodeUltraCompactSyncCode(decoded)) {
+          finishImport();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function finishImport() {
+      saveStateToLocal();
+      updateDashboard();
+      renderConfigTable();
+      renderDirectInputForm();
+      renderHistoryTable();
+      syncExitWithCurrentAssets();
+      runAiDiagnosis(false);
+    }
+
+    function loadSavedState() {
+      const saved = localStorage.getItem('assetflow_state_v3');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.accounts) appState.accounts = parsed.accounts;
+          if (parsed.historySelf && Array.isArray(parsed.historySelf)) appState.historySelf = parsed.historySelf;
+          if (parsed.historyHousehold && Array.isArray(parsed.historyHousehold)) appState.historyHousehold = parsed.historyHousehold;
+          if (parsed.exitParams) appState.exitParams = parsed.exitParams;
+          if (parsed.webAppUrl) appState.webAppUrl = parsed.webAppUrl;
+          if (typeof parsed.isHouseholdMode === 'boolean') {
+            appState.isHouseholdMode = parsed.isHouseholdMode;
+            document.getElementById('householdModeToggle').checked = appState.isHouseholdMode;
+          }
+        } catch (e) {
+          console.error("Local data parse error", e);
+        }
+      }
+    }
+
+    function saveStateToLocal() {
+      localStorage.setItem('assetflow_state_v3', JSON.stringify({
+        accounts: appState.accounts,
+        historySelf: appState.historySelf,
+        historyHousehold: appState.historyHousehold,
+        exitParams: appState.exitParams,
+        webAppUrl: appState.webAppUrl,
+        isHouseholdMode: appState.isHouseholdMode
+      }));
+    }
+
+    function openDataTransferModal() {
+      const canvas = document.getElementById('qrCodeCanvas');
+      const payload = getSyncPayloadCode();
+      const urlInput = document.getElementById('webAppUrlInput');
+      urlInput.value = appState.webAppUrl || "";
+
+      let qrValue = payload;
+      const instruction = document.getElementById('qrInstructionText');
+      const typeBadge = document.getElementById('qrTypeBadge');
+
+      if (appState.webAppUrl && appState.webAppUrl.startsWith("http")) {
+        const base = appState.webAppUrl.endsWith('/') ? appState.webAppUrl : appState.webAppUrl + '/';
+        qrValue = `${base}#data=${payload}`;
+        instruction.innerText = "スマホカメラをかざすとサイトが開き、最新残高が自動反映されます。";
+        typeBadge.innerHTML = '<i data-lucide="globe" class="w-3.5 h-3.5 mr-1 text-blue-600"></i>Webサイト連動QR（カメラで開く）';
+      } else {
+        instruction.innerText = "下部に公開URLを設定すると、スマホ標準カメラでサイトが開くようになります。";
+        typeBadge.innerHTML = '<i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>純粋データQR（Teams貼付推奨）';
+      }
+
+      new QRious({
+        element: canvas,
+        value: qrValue,
+        size: 260,
+        level: 'L',
+        padding: 10
+      });
+
+      lucide.createIcons();
+      document.getElementById('dataTransferModal').classList.remove('hidden');
+    }
+
+    function saveWebAppUrl() {
+      const val = document.getElementById('webAppUrlInput').value.trim();
+      appState.webAppUrl = val;
+      saveStateToLocal();
+      openDataTransferModal();
+      alert('GitHub Pages URLを保存しました！');
+    }
+
+    function closeDataTransferModal() {
+      document.getElementById('dataTransferModal').classList.add('hidden');
+    }
+
+    function copyCurrentSyncString() {
+      const syncCode = getSyncPayloadCode();
+      navigator.clipboard.writeText(syncCode).then(() => {
+        alert('同期用コードをコピーしました！\nTeamsのチャットに貼り付けて送信してください。');
+      }).catch(() => {
+        prompt('下記コードをコピーしてください:', syncCode);
+      });
+    }
+
+    function openPasteImportModal() {
+      document.getElementById('pasteDataInput').value = '';
+      document.getElementById('pasteImportModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('pasteDataInput').focus(), 100);
+    }
+
+    function closePasteImportModal() {
+      document.getElementById('pasteImportModal').classList.add('hidden');
+    }
+
+    function applyPastedData() {
+      const rawText = document.getElementById('pasteDataInput').value.trim();
+      if (!rawText) {
+        alert('Teams等からコピーした同期コードを貼り付けてください。');
+        return;
+      }
+
+      if (importPayloadData(rawText)) {
+        closePasteImportModal();
+        alert('🎉 最新残高データを反映しました！');
+      } else {
+        alert('データの解析に失敗しました。内容をご確認ください。');
+      }
+    }
+
+    function formatCurrency(num) {
+      return "¥" + Math.round(num).toLocaleString('ja-JP');
+    }
+
+    function parseComma(str) {
+      if (!str) return 0;
+      return parseFloat(String(str).replace(/,/g, '')) || 0;
+    }
+
+    function formatCommaInput(el) {
+      let val = el.value.replace(/[^0-9]/g, '');
+      if (val === '') { el.value = ''; return; }
+      el.value = Number(val).toLocaleString('ja-JP');
+    }
+
+    function updateRenewalField() {
+      const rent = parseComma(document.getElementById('aiRentMonthly').value);
+      document.getElementById('aiRentRenewal').value = rent.toLocaleString('ja-JP');
+    }
+
+    function switchTab(tabKey) {
+      const tabs = ['dashboard', 'update', 'exit', 'ai', 'furusato'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (t === tabKey) {
+          el.classList.remove('hidden');
+          nav.classList.add('text-blue-600');
+          nav.classList.remove('text-slate-400');
+        } else {
+          el.classList.add('hidden');
+          nav.classList.remove('text-blue-600');
+          nav.classList.add('text-slate-400');
+        }
+      });
+      if (tabKey === 'exit') recalculateExitStrategy(false);
+      if (tabKey === 'ai') runAiDiagnosis(false);
+    }
+
+    function toggleHouseholdMode(isHousehold) {
+      appState.isHouseholdMode = isHousehold;
+      const badgeText = document.getElementById('headerModeText');
+      const badgeIcon = document.getElementById('headerModeIcon');
+      const switchLabel = document.getElementById('modeSwitchLabel');
+      const scopeDesc = document.getElementById('dashScopeDescription');
+      const totalTitle = document.getElementById('cardTotalTitle');
+      const wifeShare = document.getElementById('wifeShareSubtext');
+      const modeIndicator = document.getElementById('dashModeIndicatorBadge');
+      const trendTitle = document.getElementById('trendChartTitle');
+      const inputModeBadge = document.getElementById('inputFormModeBadge');
+      const tableModeText = document.getElementById('historyTableCurrentModeText');
+      const exitModeBadge = document.getElementById('exitCurrentModeBadge');
+
+      if (isHousehold) {
+        badgeText.innerText = '世帯モード';
+        badgeIcon.setAttribute('data-lucide', 'users');
+        switchLabel.innerText = '世帯モード';
+        scopeDesc.innerText = '現在「世帯全体（本人＋配偶者）」の合算資産・推移を表示中';
+        totalTitle.innerText = '世帯 総資産計';
+        modeIndicator.innerHTML = '<i data-lucide="users" class="w-3 h-3 mr-1 text-purple-600"></i>世帯データ';
+        trendTitle.innerText = '日別・資産推移（世帯合算データ連動）';
+        inputModeBadge.innerText = '世帯データへ保存';
+        tableModeText.innerText = '（世帯モード履歴）';
+        exitModeBadge.innerText = '世帯資産連動';
+        exitModeBadge.className = 'text-[10px] bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded-full';
+        wifeShare.classList.remove('hidden');
+        wifeShare.innerText = '(配偶者の資産も合算中)';
+      } else {
+        badgeText.innerText = '単身モード';
+        badgeIcon.setAttribute('data-lucide', 'user');
+        switchLabel.innerText = '単身モード';
+        scopeDesc.innerText = '現在「単身モード（本人のみ）」の資産・推移を表示中';
+        totalTitle.innerText = '本人 総資産計';
+        modeIndicator.innerHTML = '<i data-lucide="user" class="w-3 h-3 mr-1"></i>単身データ';
+        trendTitle.innerText = '日別・資産推移（単身データ連動）';
+        inputModeBadge.innerText = '単身データへ保存';
+        tableModeText.innerText = '（単身モード履歴）';
+        exitModeBadge.innerText = '単身資産連動';
+        exitModeBadge.className = 'text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full';
+        wifeShare.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+      saveStateToLocal();
+      updateDashboard();
+      renderConfigTable();
+      renderDirectInputForm();
+      renderHistoryTable();
+      syncExitWithCurrentAssets();
+      runAiDiagnosis(false);
+    }
+
+    function updateDashboard() {
+      const activeAccounts = appState.accounts.filter(a => appState.isHouseholdMode ? true : a.owner === 'self');
+      let investSum = 0;
+      let cashSum = 0;
+
+      activeAccounts.forEach(a => {
+        if (a.type === 'securities') investSum += a.balance;
+        else cashSum += a.balance;
+      });
+
+      const total = investSum + cashSum;
+      document.getElementById('dashTotalAsset').innerText = formatCurrency(total);
+      document.getElementById('dashInvestTotal').innerText = formatCurrency(investSum);
+      document.getElementById('dashCashTotal').innerText = formatCurrency(cashSum);
+      document.getElementById('badgeInvestSum').innerText = formatCurrency(investSum);
+      document.getElementById('badgeCashSum').innerText = formatCurrency(cashSum);
+
+      const invRatio = total > 0 ? ((investSum / total) * 100).toFixed(1) : '0.0';
+      const cshRatio = total > 0 ? ((cashSum / total) * 100).toFixed(1) : '0.0';
+      document.getElementById('dashInvestRatio').innerText = `投資比率 ${invRatio}%`;
+      document.getElementById('dashCashRatio').innerText = `現金比率 ${cshRatio}%`;
+
+      const activeHist = getActiveHistory();
+      if (activeHist && activeHist.length > 0) {
+        document.getElementById('dashLastSavedDate').innerText = activeHist[activeHist.length - 1].date;
+      } else {
+        document.getElementById('dashLastSavedDate').innerText = '未記録';
+      }
+
+      const investContainer = document.getElementById('investBreakdownList');
+      const cashContainer = document.getElementById('cashBreakdownList');
+      investContainer.innerHTML = '';
+      cashContainer.innerHTML = '';
+
+      activeAccounts.filter(a => a.type === 'securities').forEach(a => {
+        investContainer.innerHTML += `
+          <div class="py-2.5 flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-800">${a.name} ${a.owner === 'wife' ? '<span class="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">妻</span>' : ''}</span>
+            <span class="font-semibold text-slate-900">${formatCurrency(a.balance)}</span>
+          </div>
+        `;
+      });
+
+      activeAccounts.filter(a => a.type === 'bank').forEach(a => {
+        cashContainer.innerHTML += `
+          <div class="py-2.5 flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-800">${a.name} ${a.owner === 'wife' ? '<span class="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">妻</span>' : ''}</span>
+            <span class="font-semibold text-slate-900">${formatCurrency(a.balance)}</span>
+          </div>
+        `;
+      });
+
+      renderDashboardCharts(investSum, cashSum);
+    }
+
+    function renderDashboardCharts(investSum, cashSum) {
+      const ctxAlloc = document.getElementById('allocationChart').getContext('2d');
+      if (allocChart) allocChart.destroy();
+      allocChart = new Chart(ctxAlloc, {
+        type: 'doughnut',
+        data: {
+          labels: ['証券口座 (投資)', '銀行口座 (現預金)'],
+          datasets: [{
+            data: [investSum, cashSum],
+            backgroundColor: ['#0071E3', '#10B981'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+        }
+      });
+
+      const activeHist = getActiveHistory();
+      const labels = activeHist.map(h => h.date);
+      const dataPoints = activeHist.map(h => Math.round(h.total / 10000));
+      document.getElementById('chartPointCountBadge').innerText = `全${labels.length}回の記録`;
+
+      const lineColor = appState.isHouseholdMode ? '#9333EA' : '#0071E3';
+      const bgColor = appState.isHouseholdMode ? 'rgba(147, 51, 234, 0.08)' : 'rgba(0, 113, 227, 0.08)';
+
+      const ctxTrend = document.getElementById('trendChart').getContext('2d');
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '総資産推移 (万円)',
+            data: dataPoints,
+            borderColor: lineColor,
+            backgroundColor: bgColor,
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: lineColor
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { callback: v => '¥' + v + '万', font: { size: 10 } } },
+            x: { ticks: { font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    function renderDirectInputForm() {
+      const container = document.getElementById('directInputFormContainer');
+      container.innerHTML = '';
+      appState.accounts.forEach((acc) => {
+        const isHidden = !appState.isHouseholdMode && acc.owner === 'wife';
+        if (isHidden) return;
+        container.innerHTML += `
+          <div class="flex items-center justify-between p-2.5 bg-slate-50/70 rounded-xl border border-black/5 text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full ${acc.type === 'securities' ? 'bg-blue-500' : 'bg-emerald-500'}"></span>
+              <span class="font-medium text-slate-800">${acc.name}</span>
+              ${acc.owner === 'wife' ? '<span class="text-[9px] bg-purple-100 text-purple-700 px-1 rounded">妻</span>' : ''}
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-slate-400">¥</span>
+              <input type="text" id="inputBal_${acc.id}" value="${acc.balance.toLocaleString('ja-JP')}" oninput="formatCommaInput(this)" class="w-32 bg-white border border-slate-200 rounded-lg px-2 py-1 text-right font-semibold text-slate-800 focus:outline-blue-500">
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function saveDirectInputValues() {
+      appState.accounts.forEach(acc => {
+        const input = document.getElementById(`inputBal_${acc.id}`);
+        if (input) {
+          acc.balance = parseComma(input.value);
+        }
+      });
+
+      const picker = document.getElementById('recordDatePicker');
+      let targetDate = picker.value ? picker.value.replace(/-/g, '/') : getTodayDateString();
+
+      const active = appState.accounts.filter(a => appState.isHouseholdMode ? true : a.owner === 'self');
+      let investSum = 0;
+      let cashSum = 0;
+      active.forEach(a => {
+        if (a.type === 'securities') investSum += a.balance;
+        else cashSum += a.balance;
+      });
+      const total = investSum + cashSum;
+
+      const targetHist = getActiveHistory();
+      const existingIdx = targetHist.findIndex(h => h.date === targetDate);
+      if (existingIdx >= 0) {
+        targetHist[existingIdx].total = total;
+        targetHist[existingIdx].invest = investSum;
+        targetHist[existingIdx].cash = cashSum;
+      } else {
+        targetHist.push({
+          date: targetDate,
+          total: total,
+          invest: investSum,
+          cash: cashSum
+        });
+        targetHist.sort((a, b) => new Date(a.date.replace(/\//g, '-')) - new Date(b.date.replace(/\//g, '-')));
+      }
+
+      saveStateToLocal();
+      updateDashboard();
+      renderHistoryTable();
+      syncExitWithCurrentAssets();
+      runAiDiagnosis(false);
+      alert(`✅【${appState.isHouseholdMode ? '世帯モード' : '単身モード'}】${targetDate} 分の資産記録を保存しました！\n総資産: ${formatCurrency(total)}\n推移チャートに最新記録が反映されました。`);
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const activeHist = getActiveHistory();
+
+      if (activeHist.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">履歴データがありません</td></tr>`;
+        return;
+      }
+
+      activeHist.slice().reverse().forEach((item, revIdx) => {
+        const realIdx = activeHist.length - 1 - revIdx;
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/60 transition">
+            <td class="py-2.5 px-3 font-medium text-slate-800">${item.date}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${formatCurrency(item.total)}</td>
+            <td class="py-2.5 px-3 text-blue-600">${formatCurrency(item.invest)}</td>
+            <td class="py-2.5 px-3 text-emerald-600">${formatCurrency(item.cash)}</td>
+            <td class="py-2.5 px-3 text-right">
+              <button onclick="removeHistoryItem(${realIdx})" class="text-rose-500 hover:text-rose-700 p-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function removeHistoryItem(idx) {
+      const targetHist = getActiveHistory();
+      if (confirm(`記録「${targetHist[idx].date}」を削除しますか？`)) {
+        targetHist.splice(idx, 1);
+        saveStateToLocal();
+        updateDashboard();
+        renderHistoryTable();
+      }
+    }
+
+    function clearHistoryConfirm() {
+      const modeName = appState.isHouseholdMode ? '世帯モード' : '単身モード';
+      if (confirm(`${modeName}の履歴データを初期状態に戻しますか？`)) {
+        if (appState.isHouseholdMode) {
+          appState.historyHousehold = [
+            { date: "2023/06", total: 13920000, invest: 7600000, cash: 6320000 },
+            { date: "2024/04", total: 16450000, invest: 9700000, cash: 6750000 },
+            { date: "2025/03", total: 20880000, invest: 13000000, cash: 7880000 },
+            { date: "2026/09/17", total: 29190000, invest: 20262195, cash: 8927112 }
+          ];
+        } else {
+          appState.historySelf = [
+            { date: "2023/06", total: 11920000, invest: 7000000, cash: 4920000 },
+            { date: "2024/04", total: 14050000, invest: 8900000, cash: 5150000 },
+            { date: "2025/03", total: 18080000, invest: 12000000, cash: 6080000 },
+            { date: "2026/09/17", total: 26190000, invest: 19062195, cash: 7127112 }
+          ];
+        }
+        saveStateToLocal();
+        updateDashboard();
+        renderHistoryTable();
+      }
+    }
+
+    function renderConfigTable() {
+      const tbody = document.getElementById('accountConfigTableBody');
+      tbody.innerHTML = '';
+      appState.accounts.forEach((acc, idx) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/60 transition">
+            <td class="py-2.5 px-3">
+              <input type="text" value="${acc.name}" onchange="appState.accounts[${idx}].name = this.value; saveStateToLocal(); updateDashboard();" class="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 font-medium text-slate-800">
+            </td>
+            <td class="py-2.5 px-3">
+              <select onchange="appState.accounts[${idx}].owner = this.value; saveStateToLocal(); updateDashboard();" class="bg-transparent border border-slate-200 rounded px-1.5 py-0.5 text-[11px]">
+                <option value="self" ${acc.owner === 'self' ? 'selected' : ''}>本人</option>
+                <option value="wife" ${acc.owner === 'wife' ? 'selected' : ''}>配偶者 (妻)</option>
+              </select>
+            </td>
+            <td class="py-2.5 px-3">
+              <select onchange="appState.accounts[${idx}].type = this.value; saveStateToLocal(); updateDashboard();" class="bg-transparent border border-slate-200 rounded px-1.5 py-0.5 text-[11px]">
+                <option value="securities" ${acc.type === 'securities' ? 'selected' : ''}>証券口座 (投資)</option>
+                <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>銀行口座 (現預金)</option>
+              </select>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              <button onclick="removeAccount(${idx})" class="text-rose-500 hover:text-rose-700 p-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function addNewAccountRow() {
+      const newId = 'acc_' + Date.now();
+      appState.accounts.push({ id: newId, name: '新規口座', type: 'bank', owner: 'self', balance: 0 });
+      saveStateToLocal();
+      renderConfigTable();
+      renderDirectInputForm();
+      updateDashboard();
+    }
+
+    function removeAccount(idx) {
+      if (confirm(`「${appState.accounts[idx].name}」を削除してもよろしいですか？`)) {
+        appState.accounts.splice(idx, 1);
+        saveStateToLocal();
+        renderConfigTable();
+        renderDirectInputForm();
+        updateDashboard();
+      }
+    }
+
+    function syncExitWithCurrentAssets() {
+      const active = appState.accounts.filter(a => appState.isHouseholdMode ? true : a.owner === 'self');
+      let investSum = 0;
+      let cashSum = 0;
+      active.forEach(a => {
+        if (a.type === 'securities') investSum += a.balance;
+        else cashSum += a.balance;
+      });
+
+      const investInput = document.getElementById('exitParamCurrentInvest');
+      const cashInput = document.getElementById('exitParamCash');
+      if (investInput) investInput.value = investSum.toLocaleString('ja-JP');
+      if (cashInput) cashInput.value = cashSum.toLocaleString('ja-JP');
+
+      recalculateExitStrategy(false);
+    }
+
+    function resetExitAssumptions() {
+      document.getElementById('exitParamReturn').value = "5.0";
+      document.getElementById('exitParamInvestStart').value = "3,000,000";
+      document.getElementById('exitParamInvestStep').value = "200,000";
+      document.getElementById('exitParamInflation').value = "2.0";
+      syncExitWithCurrentAssets();
+      alert('前提条件を初期値にリセットしました。');
+    }
+
+    function recalculateExitStrategy(showToast = false) {
+      const curInvest = parseComma(document.getElementById('exitParamCurrentInvest').value);
+      const r = (parseFloat(document.getElementById('exitParamReturn').value) || 5.0) / 100;
+      const invStart = parseComma(document.getElementById('exitParamInvestStart').value);
+      const invStep = parseComma(document.getElementById('exitParamInvestStep').value);
+      const cash = parseComma(document.getElementById('exitParamCash').value);
+      const inf = (parseFloat(document.getElementById('exitParamInflation').value) || 2.0) / 100;
+
+      appState.exitParams.returnRate = (r * 100);
+      appState.exitParams.investStart = invStart;
+      appState.exitParams.investStep = invStep;
+      appState.exitParams.cashFloor = cash;
+      appState.exitParams.inflationRate = (inf * 100);
+      saveStateToLocal();
+
+      let currentInvest = curInvest;
+      let nominalTotals = [];
+      let realTotals = [];
+      let labels = [];
+
+      let asset50 = 0;
+      let asset60 = 0;
+      let real50 = 0;
+      let real60 = 0;
+
+      for (let age = 36; age <= 60; age++) {
+        labels.push(`${age}歳`);
+        let yearlyInvest = Math.min(6000000, invStart + (age - 36) * invStep);
+        if (age > 36) {
+          currentInvest = currentInvest * (1 + r) + yearlyInvest;
+        }
+        let totalNominal = currentInvest + cash;
+        let inflationFactor = Math.pow(1 + inf, age - 36);
+        let totalReal = totalNominal / inflationFactor;
+
+        nominalTotals.push(Math.round(totalNominal / 10000));
+        realTotals.push(Math.round(totalReal / 10000));
+
+        if (age === 50) { asset50 = totalNominal; real50 = totalReal; }
+        if (age === 60) { asset60 = totalNominal; real60 = totalReal; }
+      }
+
+      document.getElementById('exitSim50Asset').innerText = formatCurrency(asset50);
+      document.getElementById('exitSim50Yearly').innerText = formatCurrency(asset50 * 0.04);
+      document.getElementById('exitSim50Monthly').innerText = formatCurrency((asset50 * 0.04) / 12);
+      document.getElementById('exitSim50RealMonthly').innerText = formatCurrency((real50 * 0.04) / 12);
+
+      document.getElementById('exitSim60Asset').innerText = formatCurrency(asset60);
+      document.getElementById('exitSim60Yearly').innerText = formatCurrency(asset60 * 0.04);
+      document.getElementById('exitSim60Monthly').innerText = formatCurrency((asset60 * 0.04) / 12);
+      document.getElementById('exitSim60RealMonthly').innerText = formatCurrency((real60 * 0.04) / 12);
+
+      const ctxExit = document.getElementById('exitProjectionChart').getContext('2d');
+      if (exitChart) exitChart.destroy();
+      exitChart = new Chart(ctxExit, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '名目資産 (万円)',
+              data: nominalTotals,
+              borderColor: '#0071E3',
+              backgroundColor: 'rgba(0, 113, 227, 0.05)',
+              borderWidth: 2.5,
+              tension: 0.3
+            },
+            {
+              label: '実質価値 (インフレ調整後・万円)',
+              data: realTotals,
+              borderColor: '#F59E0B',
+              borderDash: [5, 5],
+              borderWidth: 2,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 } } } },
+          scales: {
+            y: { ticks: { callback: v => '¥' + v + '万', font: { size: 10 } } },
+            x: { ticks: { font: { size: 10 } } }
+          }
+        }
+      });
+
+      if (showToast) {
+        alert(`📈 最新パラメータに基づき出口戦略を再計算しました！\n50歳到達時資産: ${formatCurrency(asset50)}\n60歳到達時資産: ${formatCurrency(asset60)}`);
+      }
+    }
+
+    function toggleHousingFields(type) {
+      if (type === 'rent') {
+        document.getElementById('housingRentFields').classList.remove('hidden');
+        document.getElementById('housingOwnFields').classList.add('hidden');
+      } else {
+        document.getElementById('housingRentFields').classList.add('hidden');
+        document.getElementById('housingOwnFields').classList.remove('hidden');
+      }
+    }
+
+    function runAiDiagnosis(showToast = false) {
+      const active = appState.accounts.filter(a => appState.isHouseholdMode ? true : a.owner === 'self');
+      let totalAsset = 0;
+      let cashTotal = 0;
+      active.forEach(a => {
+        totalAsset += a.balance;
+        if (a.type === 'bank') cashTotal += a.balance;
+      });
+
+      const selfIncome = parseComma(document.getElementById('aiIncomeSelf').value);
+      const spouseIncome = parseComma(document.getElementById('aiIncomeSpouse').value);
+      const totalIncome = selfIncome + (appState.isHouseholdMode ? spouseIncome : 0);
+      const area = document.getElementById('aiResidenceArea').value;
+      const children = parseInt(document.getElementById('aiChildren').value);
+      const isRent = document.querySelector('input[name="housingType"]:checked').value === 'rent';
+      const rent = parseComma(document.getElementById('aiRentMonthly').value);
+      updateRenewalField();
+
+      const assetInMan = Math.round(totalAsset / 10000);
+      let pct = 90;
+      let layerName = "アッパーマス層";
+      if (totalAsset >= 100000000) { pct = 99; layerName = "富裕層"; }
+      else if (totalAsset >= 50000000) { pct = 97; layerName = "準富裕層"; }
+      else if (totalAsset >= 30000000) { pct = 95; layerName = "アッパーマス層上位"; }
+      else if (totalAsset >= 20000000) { pct = 92; layerName = "アッパーマス層"; }
+      else if (totalAsset >= 10000000) { pct = 80; layerName = "マス層上位"; }
+      else { pct = 50; layerName = "マス層平均"; }
+
+      document.getElementById('aiPositionBar').style.width = `${pct}%`;
+      document.getElementById('aiPositionBadge').innerText = `上位 約${100 - pct}%（${layerName}）`;
+      document.getElementById('aiCurrentAssetPositionText').innerText = `現在: 約${assetInMan.toLocaleString()}万円 (上位${100 - pct}%)`;
+
+      const adviceCards = document.getElementById('aiAdviceCards');
+      adviceCards.innerHTML = `
+        <div class="p-3.5 bg-blue-50/50 rounded-xl border border-blue-100 space-y-1">
+          <span class="text-xs font-bold text-blue-900 flex items-center">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 text-blue-600"></i>${appState.isHouseholdMode ? '夫婦新NISAの早期枠充足' : '本人新NISAの最速最大化'}
+          </span>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            現在年収${(totalIncome/10000).toFixed(0)}万円の余剰力と現預金${(cashTotal/10000).toFixed(0)}万円を活用し、${appState.isHouseholdMode ? '夫婦合計3,600万円の枠を年360万×2名ペース' : '年360万円ペース'}で早期充当するのが最適解です。
+          </p>
+        </div>
+
+        <div class="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-100 space-y-1">
+          <span class="text-xs font-bold text-emerald-900 flex items-center">
+            <i data-lucide="shield" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>生活防衛資金${(cashTotal/10000).toFixed(0)}万円の維持
+          </span>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            年間住居費約${((rent * 12.5)/10000).toFixed(0)}万円と生活費を考慮しても、現預金${(cashTotal/10000).toFixed(0)}万円は下落相場でも生活水準を保ちながら耐えられる水準です。
+          </p>
+        </div>
+
+        <div class="p-3.5 bg-purple-50/50 rounded-xl border border-purple-100 space-y-1">
+          <span class="text-xs font-bold text-purple-900 flex items-center">
+            <i data-lucide="compass" class="w-3.5 h-3.5 mr-1 text-purple-600"></i>50歳サイドFIRE達成度
+          </span>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            現在の元本${(totalAsset/10000).toFixed(0)}万円から年利5%運用を継続することで、50歳到達時の1億円超え（月額30万円超の取崩し余力）は極めて確度の高い射程にあります。
+          </p>
+        </div>
+      `;
+
+      const housingBox = document.getElementById('housingAdviceBox');
+      if (isRent) {
+        let recHousing = "";
+        if (area === 'tokyo_suburb') {
+          recHousing = "<strong>神奈川・武蔵小杉/たまプラーザ、埼玉・浦和/大宮、東京市部・吉祥寺周辺</strong>の駅徒歩10分以内・大手デベロッパー分譲賃貸（2LDK〜3LDK、家賃目安16〜20万円）。";
+        } else if (area === 'tokyo_central') {
+          recHousing = "<strong>文京区・目黒区・世田谷区</strong>のファミリー向け分譲賃貸マンション（2LDK、家賃目安22〜26万円）。世帯年収1,250万なら家賃負担率25%以内で健全です。";
+        } else {
+          recHousing = "<strong>中核都市駅近</strong>の築浅ハイグレード分譲賃貸マンション（3LDK、家賃目安14〜17万円）。駐車場付き戸建ても有力候補です。";
+        }
+        housingBox.innerHTML = `
+          <span class="text-xs font-bold text-slate-900 flex items-center mb-1">
+            <i data-lucide="home" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>資産・年収に応じた住居プラン（賃貸）
+          </span>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            ${recHousing}<br>
+            ※2年ごとの更新料を加味した実質年コストは約${((rent * 12.5)/10000).toFixed(1)}万円。手元現金を拘束せず相場の変動や子どもの成長に柔軟に対応できます。
+          </p>
+        `;
+      } else {
+        housingBox.innerHTML = `
+          <span class="text-xs font-bold text-slate-900 flex items-center mb-1">
+            <i data-lucide="home" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>持ち家ローンの返済最適化
+          </span>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            住宅ローン控除期間中は繰上返済を控え、低金利を維持しつつ手元余剰金は新NISA等の高利回り運用（年利5%想定）に充当するレバレッジが最も効率的です。
+          </p>
+        `;
+      }
+
+      const eduBox = document.getElementById('educationAdviceBox');
+      eduBox.innerHTML = `
+        <span class="text-xs font-bold text-blue-900 flex items-center mb-1">
+          <i data-lucide="graduation-cap" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>お子様の教育・習い事ポートフォリオ
+        </span>
+        <p class="text-[11px] text-slate-600 leading-relaxed">
+          ${children > 0 ? `お子様${children}名の場合、中高私立一貫校進学（年100〜150万円/人）を選択しても世帯資産の複利成長を損なうことなく完走可能です。` : '将来の教育費を見据えた万全の運用体制が整っています。'}
+          <br><strong>推奨習い事:</strong> 幼児〜低学年（水泳・体操、英語知育）、高学年（プログラミング、算数オリンピック・探究学習教室）。月額目安: 子ども1人あたり2〜4万円。
+        </p>
+      `;
+
+      recalcFurusato(selfIncome, spouseIncome);
+      lucide.createIcons();
+
+      if (showToast) {
+        alert('✨ 最新の入力条件および登録資産に基づいてAI診断レポートを更新しました！');
+      }
+    }
+
+    function recalcFurusato(selfIncome, spouseIncome) {
+      function getLimit(income) {
+        if (income < 3000000) return 15000;
+        if (income < 5000000) return Math.round((income - 3000000) * 0.015 + 28000);
+        if (income < 8000000) return Math.round((income - 5000000) * 0.025 + 61000);
+        if (income < 10000000) return Math.round((income - 8000000) * 0.035 + 130000);
+        return Math.round((income - 10000000) * 0.045 + 175000);
+      }
+      const limitSelf = getLimit(selfIncome);
+      const limitSpouse = getLimit(spouseIncome);
+
+      document.getElementById('furusatoSelfLimit').innerText = formatCurrency(limitSelf);
+      document.getElementById('furusatoSpouseLimit').innerText = formatCurrency(limitSpouse);
+      document.getElementById('furusatoTotalLimit').innerText = formatCurrency(limitSelf + limitSpouse);
+      document.getElementById('furusatoSelfIncomeDisplay').innerText = (selfIncome / 10000).toFixed(0);
+      document.getElementById('furusatoSpouseIncomeDisplay').innerText = (spouseIncome / 10000).toFixed(0);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      loadSavedState();
+
+      const picker = document.getElementById('recordDatePicker');
+      if (picker) {
+        const today = new Date().toISOString().split('T')[0];
+        picker.value = today;
+      }
+
+      if (window.location.hash.includes('#data=')) {
+        if (importPayloadData(window.location.hash)) {
+          history.replaceState(null, null, window.location.pathname);
+          alert('🎉 QRコードから最新の資産データを取り込みました！');
+        }
+      }
+
+      lucide.createIcons();
+      updateDashboard();
+      renderConfigTable();
+      renderDirectInputForm();
+      renderHistoryTable();
+      syncExitWithCurrentAssets();
+      runAiDiagnosis(false);
+    });
+  </script>
+</body>
+</html>
