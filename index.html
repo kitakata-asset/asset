@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -33,6 +34,7 @@
       --danger-color: #ff3b30;
       --success-color: #34c759;
       --warning-color: #ff9500;
+      --purple-color: #af52de;
       --nav-bg: rgba(255, 255, 255, 0.85);
       --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
       --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
@@ -63,7 +65,7 @@
       background-color: var(--bg-color);
       color: var(--text-main);
       line-height: 1.5;
-      padding-bottom: 90px;
+      padding-bottom: 96px;
       transition: background-color 0.3s, color 0.3s;
     }
 
@@ -81,7 +83,7 @@
       align-items: center;
       justify-content: space-between;
     }
-    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .logo {
       font-weight: 700;
       font-size: 1.25rem;
@@ -143,23 +145,26 @@
     .btn-primary { background: var(--accent-color); color: #fff; }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-secondary { background: var(--card-sub-bg); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-danger { background: rgba(255, 59, 48, 0.12); color: var(--danger-color); border: 1px solid rgba(255, 59, 48, 0.3); }
+    .btn-danger:hover { background: var(--danger-color); color: #fff; }
     .btn-sm { padding: 6px 10px; font-size: 0.75rem; border-radius: 8px; }
 
     /* Navigation Tabs (PC Header) */
     .nav-tabs {
       display: flex;
-      gap: 6px;
-      margin-left: 20px;
+      gap: 4px;
+      margin-left: 16px;
     }
     .nav-tab-btn {
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 8px;
       cursor: pointer;
+      transition: all 0.15s;
     }
     .nav-tab-btn.active {
       color: var(--accent-color);
@@ -177,7 +182,7 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid var(--border-color);
-      padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+      padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
       z-index: 1000;
       justify-content: space-around;
     }
@@ -188,19 +193,20 @@
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 600;
       gap: 3px;
       cursor: pointer;
       flex: 1;
+      padding: 4px 0;
     }
-    .mob-nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+    .mob-nav-item svg { width: 18px; height: 18px; fill: currentColor; }
     .mob-nav-item.active { color: var(--accent-color); }
 
     /* Main Container */
     .container {
       max-width: 1080px;
-      margin: 24px auto;
+      margin: 20px auto;
       padding: 0 16px;
     }
 
@@ -209,7 +215,7 @@
       background: var(--card-bg);
       border-radius: var(--radius-md);
       padding: 24px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       box-shadow: var(--shadow-sm);
       border: 1px solid var(--border-color);
     }
@@ -220,6 +226,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     /* Top Summary Grid */
@@ -237,25 +245,94 @@
       box-shadow: var(--shadow-sm);
     }
     .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
-    .stat-val { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+    .stat-val { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.5px; }
 
     /* Tables */
     .table-responsive { width: 100%; overflow-x: auto; margin-top: 12px; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
-    th { padding: 10px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; }
+    th { padding: 10px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; white-space: nowrap; }
     td { padding: 12px 10px; border-bottom: 1px solid var(--border-color); }
 
-    /* Forms & Inputs */
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    /* Forms & Inputs (Mobile Safe) */
+    .form-group {
+      margin-bottom: 16px;
+      min-width: 0; /* Prevents flex/grid blowouts */
+    }
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      white-space: normal;
+      word-break: break-word;
+    }
     .form-input, .form-select {
       width: 100%;
-      padding: 10px 14px;
+      max-width: 100%;
+      min-width: 0;
+      padding: 10px 12px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-color);
       background: var(--card-sub-bg);
       color: var(--text-main);
       font-size: 0.9rem;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input[type="date"].form-input {
+      min-height: 42px;
+      line-height: normal;
+    }
+
+    /* Responsive Grid for Form Inputs */
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: 16px;
+    }
+
+    /* AI Advice Cards */
+    .ai-score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(175, 82, 222, 0.12);
+      color: var(--purple-color);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .advice-card {
+      background: var(--card-sub-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-top: 12px;
+      position: relative;
+      border-left: 4px solid var(--accent-color);
+    }
+    .advice-card.warning { border-left-color: var(--warning-color); }
+    .advice-card.success { border-left-color: var(--success-color); }
+    .advice-card.purple { border-left-color: var(--purple-color); }
+    .advice-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .advice-text { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* Progress bar */
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent-color);
+      border-radius: 4px;
+      transition: width 0.4s ease;
     }
 
     /* Toast Notification */
@@ -312,8 +389,9 @@
       .nav-tabs { display: none; }
       .mobile-bottom-nav { display: flex; }
       header { padding: 10px 14px; }
-      .container { margin: 16px auto; }
-      .card { padding: 18px; }
+      .container { margin: 14px auto; }
+      .card { padding: 16px; }
+      .stat-val { font-size: 1.3rem; }
     }
   </style>
 </head>
@@ -327,7 +405,7 @@
           <path d="M3.5 18.5L9.5 12.5L13.5 16.5L20.5 7.5M20.5 7.5H15.5M20.5 7.5V12.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span>AssetFlow</span>
-        <span class="logo-badge" id="appVersionBadge">v3.5</span>
+        <span class="logo-badge" id="appVersionBadge">v3.7</span>
       </div>
 
       <!-- Mode Switcher -->
@@ -339,7 +417,8 @@
       <!-- Desktop Nav Tabs -->
       <nav class="nav-tabs">
         <button class="nav-tab-btn active" onclick="showTab('tab-dashboard', this)">ホーム</button>
-        <button class="nav-tab-btn" onclick="showTab('tab-update', this)">残高更新</button>
+        <button class="nav-tab-btn" onclick="showTab('tab-update', this)">残高更新・口座</button>
+        <button class="nav-tab-btn" onclick="showTab('tab-ai', this)">AI相談・診断</button>
         <button class="nav-tab-btn" onclick="showTab('tab-tax', this)">納税・控除</button>
         <button class="nav-tab-btn" onclick="showTab('tab-exit', this)">出口・年金</button>
         <button class="nav-tab-btn" onclick="showTab('tab-settings', this)">外観・規約</button>
@@ -363,6 +442,10 @@
     <button class="mob-nav-item" onclick="showTab('tab-update', this)">
       <svg viewBox="0 0 24 24"><path d="M19.045 7.401A2.99 2.99 0 0 0 17 6.5H7.414l2.293-2.293a.999.999 0 1 0-1.414-1.414l-4 4a1 1 0 0 0 0 1.414l4 4a.999.999 0 1 0 1.414-1.414L7.414 8.5H17c.801 0 1.512.479 1.813 1.219a1 1 0 0 0 1.844-.766l-1.612-1.552zM4.955 16.599A2.99 2.99 0 0 0 7 17.5h9.586l-2.293 2.293a.999.999 0 1 0 1.414 1.414l4-4a1 1 0 0 0 0-1.414l-4-4a.999.999 0 1 0-1.414 1.414l2.293 2.293H7c-.801 0-1.512-.479-1.813-1.219a1 1 0 0 0-1.844.766l1.612 1.552z"/></svg>
       残高更新
+    </button>
+    <button class="mob-nav-item" onclick="showTab('tab-ai', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12c0 5.515 4.486 10 10 10s10-4.485 10-10c0-5.514-4.486-10-10-10zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm1-11h-2v2h2V9zm0 4h-2v4h2v-4z"/></svg>
+      AI診断
     </button>
     <button class="mob-nav-item" onclick="showTab('tab-tax', this)">
       <svg viewBox="0 0 24 24"><path d="M20 6h-3V4c0-1.103-.897-2-2-2H9c-1.103 0-2 .897-2 2v2H4c-1.103 0-2 .897-2 2v11c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V8c0-1.103-.897-2-2-2zM9 4h6v2H9V4zm11 15H4V8h16v11z"/></svg>
@@ -428,52 +511,88 @@
               </tr>
             </thead>
             <tbody id="accountTableBody">
-              <!-- Dynamically populated -->
+              <!-- Populated dynamically -->
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- TAB 2: UPDATE BALANCE & HISTORY -->
+    <!-- TAB 2: UPDATE BALANCE & MANAGE ACCOUNTS -->
     <section id="tab-update" class="tab-content" style="display:none;">
+      <!-- Snapshot Input Card -->
       <div class="card">
         <div class="card-title">
           <span>残高スナップショット更新</span>
           <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);" id="updateModeBadge">単身モード更新中</span>
         </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
-          <div class="form-group">
-            <label class="form-label">記録日</label>
-            <input type="date" class="form-input" id="inputRecordDate">
-          </div>
-          <div class="form-group">
-            <label class="form-label">新NISA / つみたて投資枠 (円)</label>
-            <input type="number" class="form-input" id="inputNisa">
-          </div>
-          <div class="form-group">
-            <label class="form-label">特定口座 / 株式投信 (円)</label>
-            <input type="number" class="form-input" id="inputTokutei">
-          </div>
-          <div class="form-group">
-            <label class="form-label">iDeCo / 確定拠出年金 (円)</label>
-            <input type="number" class="form-input" id="inputIdeco">
-          </div>
-          <div class="form-group">
-            <label class="form-label">銀行普通預金 / 現金 (円)</label>
-            <input type="number" class="form-input" id="inputCash">
-          </div>
-          <div class="form-group">
-            <label class="form-label">定期預金 / 個人向け国債 (円)</label>
-            <input type="number" class="form-input" id="inputBonds">
-          </div>
+
+        <!-- Date Input (Fixed Overflow on Mobile) -->
+        <div class="form-group" style="max-width: 320px;">
+          <label class="form-label">記録日</label>
+          <input type="date" class="form-input" id="inputRecordDate">
         </div>
 
-        <div style="margin-top:16px; display:flex; gap:10px;">
+        <!-- Dynamic Account Inputs Grid -->
+        <div class="input-grid" id="dynamicBalanceInputs">
+          <!-- Populated from current accounts -->
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="saveCurrentRecord()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>
             この日の記録を保存・更新
           </button>
+        </div>
+      </div>
+
+      <!-- Account Customization (Add / Edit / Delete Accounts) -->
+      <div class="card">
+        <div class="card-title">
+          <span>口座のカスタマイズ (<span class="current-mode-label">単身</span>)</span>
+          <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);">口座の追加・名称変更・削除</span>
+        </div>
+
+        <!-- Add New Account Form -->
+        <div style="background:var(--card-sub-bg); padding:16px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:16px;">
+          <div style="font-weight:600; font-size:0.85rem; margin-bottom:12px;">新しい口座を追加</div>
+          <div class="input-grid">
+            <div class="form-group">
+              <label class="form-label">口座名称</label>
+              <input type="text" class="form-input" id="newAccountName" placeholder="例: 暗号資産 / 楽天銀行">
+            </div>
+            <div class="form-group">
+              <label class="form-label">資産種別</label>
+              <select class="form-select" id="newAccountType">
+                <option value="invest">投資資産 (リスク資産)</option>
+                <option value="cash">現金・預金 (無リスク)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">初期残高 (円)</label>
+              <input type="number" class="form-input" id="newAccountBalance" placeholder="0">
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="addNewAccount()">
+            + この口座を追加する
+          </button>
+        </div>
+
+        <!-- Existing Accounts Editor Table -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>口座名</th>
+                <th>種別</th>
+                <th style="text-align:right;">残高(円)</th>
+                <th style="text-align:center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="manageAccountsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -497,11 +616,76 @@
       </div>
     </section>
 
-    <!-- TAB 3: TAX & DEDUCTIONS -->
+    <!-- TAB 3: AI DIAGNOSIS & ADVICE -->
+    <section id="tab-ai" class="tab-content" style="display:none;">
+      <!-- AI Header Summary -->
+      <div class="card">
+        <div class="card-title">
+          <span>AI 総合資産形成・ポートフォリオ診断</span>
+          <div class="ai-score-badge" id="aiScoreBadge">AI健全度スコア: --点</div>
+        </div>
+
+        <!-- Position in Society / Percentile -->
+        <div style="margin-bottom: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; font-weight:600;">
+            <span>純資産階層ポジション (野村総研ピラミッド基準)</span>
+            <span id="aiWealthClass" style="color:var(--accent-color); font-weight:700;">判定中</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="aiWealthProgress" style="width: 40%;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+            <span>マス層 (&lt;3000万)</span>
+            <span>アッパーマス (3000万〜)</span>
+            <span>準富裕層 (5000万〜)</span>
+            <span>富裕層 (1億〜)</span>
+          </div>
+        </div>
+
+        <!-- Custom Parameters for AI -->
+        <div style="background:var(--card-sub-bg); padding:16px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:16px;">
+          <div style="font-weight:600; font-size:0.85rem; margin-bottom:12px;">診断用プロファイル調整</div>
+          <div class="input-grid">
+            <div class="form-group">
+              <label class="form-label">現在の年代</label>
+              <select class="form-select" id="aiAgeGroup">
+                <option value="20">20代</option>
+                <option value="30" selected>30代</option>
+                <option value="40">40代</option>
+                <option value="50">50代</option>
+                <option value="60">60代以上</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">1ヶ月の平均生活費 (円)</label>
+              <input type="number" class="form-input" id="aiMonthlyLivingCost" value="280000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">投資リスク許容度</label>
+              <select class="form-select" id="aiRiskTolerance">
+                <option value="low">安定重視 (現金厚め)</option>
+                <option value="mid" selected>標準・バランス (インデックス中心)</option>
+                <option value="high">積極形成 (株式高比率)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="runAiDiagnosis()">
+            最新データと入力値でAI総合診断を実行・更新
+          </button>
+        </div>
+
+        <!-- AI Advice Results -->
+        <div id="aiAdviceContainer">
+          <!-- Advice Cards inserted via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: TAX & DEDUCTIONS -->
     <section id="tab-tax" class="tab-content" style="display:none;">
       <div class="card">
         <div class="card-title">納税・税額控除シミュレータ</div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+        <div class="input-grid">
           <div class="form-group">
             <label class="form-label">居住地 (都道府県 / 政令指定都市)</label>
             <select class="form-select" id="taxLocation">
@@ -610,13 +794,13 @@
       </div>
     </section>
 
-    <!-- TAB 4: EXIT STRATEGY & PENSION -->
+    <!-- TAB 5: EXIT STRATEGY & PENSION -->
     <section id="tab-exit" class="tab-content" style="display:none;">
       <div class="card">
         <div class="card-title">
           <span>将来推移＆出口戦略シミュレータ (4%ルール & 年金合算)</span>
         </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+        <div class="input-grid">
           <div class="form-group">
             <label class="form-label">現在の運用元本 (リスク資産)</label>
             <input type="number" class="form-input" id="exitInitAsset" readonly style="opacity:0.8;">
@@ -675,7 +859,7 @@
       </div>
     </section>
 
-    <!-- TAB 5: SETTINGS & TERMS -->
+    <!-- TAB 6: SETTINGS & TERMS -->
     <section id="tab-settings" class="tab-content" style="display:none;">
       <!-- Appearance -->
       <div class="card">
@@ -773,7 +957,7 @@
     // ----------------------------------------------------
     // State & Storage Keys
     // ----------------------------------------------------
-    const STORAGE_KEY = "assetflow_data_v3";
+    const STORAGE_KEY = "assetflow_data_v3_7";
     const DEFAULT_BASE_URL = "https://kitakata-asset.github.io/asset/";
 
     let appState = {
@@ -819,6 +1003,11 @@
         rate: 5.0,
         pensionSelf: 160000,
         pensionSpouse: 70000
+      },
+      aiSettings: {
+        age: 30,
+        monthlyCost: 280000,
+        tolerance: "mid"
       }
     };
 
@@ -833,11 +1022,11 @@
       applyTheme(appState.theme);
       document.getElementById("cfgWebBaseUrl").value = appState.webBaseUrl || DEFAULT_BASE_URL;
       document.getElementById("inputRecordDate").valueAsDate = new Date();
-      
-      syncFormFields();
+
       renderAll();
       simulateExitStrategy();
       calculateTaxDetails();
+      runAiDiagnosis();
     });
 
     function showToast(msg) {
@@ -852,7 +1041,7 @@
     // ----------------------------------------------------
     function loadStorage() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("assetflow_data_v3");
         if (saved) {
           const parsed = JSON.parse(saved);
           appState = { ...appState, ...parsed };
@@ -885,11 +1074,15 @@
     }
 
     // ----------------------------------------------------
-    // Rendering Logic
+    // Dynamic Render & Account Management
     // ----------------------------------------------------
+    function getCurrentAccounts() {
+      return appState.mode === "self" ? appState.accountsSelf : appState.accountsHousehold;
+    }
+
     function renderAll() {
       const isSelf = appState.mode === "self";
-      const accounts = isSelf ? appState.accountsSelf : appState.accountsHousehold;
+      const accounts = getCurrentAccounts();
       const history = isSelf ? appState.historySelf : appState.historyHousehold;
 
       // Update Mode Labels
@@ -919,14 +1112,41 @@
       // Exit Strategy initial balance sync
       document.getElementById("exitInitAsset").value = investSum;
 
-      // Render Account Breakdown Table
+      // Render Dashboard Account Breakdown Table
       const tb = document.getElementById("accountTableBody");
       tb.innerHTML = accounts.map(a => `
         <tr>
-          <td><strong>${a.name}</strong></td>
+          <td><strong>${escapeHtml(a.name)}</strong></td>
           <td><span style="font-size:0.75rem; padding:2px 8px; border-radius:10px; background:${a.type==='invest'?'rgba(0,113,227,0.1)':'rgba(52,199,89,0.1)'}; color:${a.type==='invest'?'var(--accent-color)':'var(--success-color)'}; font-weight:600;">${a.type==='invest'?'投資(リスク)':'現金(無リスク)'}</span></td>
           <td>${isSelf ? '本人' : '世帯合算'}</td>
           <td style="text-align:right; font-weight:600;">¥${a.balance.toLocaleString()}</td>
+        </tr>
+      `).join("");
+
+      // Render Dynamic Inputs for Snapshot Update
+      const dynInputs = document.getElementById("dynamicBalanceInputs");
+      dynInputs.innerHTML = accounts.map(a => `
+        <div class="form-group">
+          <label class="form-label">${escapeHtml(a.name)} (円)</label>
+          <input type="number" class="form-input" id="accInput_${a.id}" value="${a.balance}">
+        </div>
+      `).join("");
+
+      // Render Manage Accounts Table
+      const mat = document.getElementById("manageAccountsTableBody");
+      mat.innerHTML = accounts.map((a, idx) => `
+        <tr>
+          <td><input type="text" class="form-input" style="padding:6px 10px; font-size:0.85rem;" value="${escapeHtml(a.name)}" onchange="updateAccountName(${idx}, this.value)"></td>
+          <td>
+            <select class="form-select" style="padding:6px 10px; font-size:0.85rem;" onchange="updateAccountType(${idx}, this.value)">
+              <option value="invest" ${a.type==='invest'?'selected':''}>投資</option>
+              <option value="cash" ${a.type==='cash'?'selected':''}>現金</option>
+            </select>
+          </td>
+          <td style="text-align:right; font-weight:600;">¥${a.balance.toLocaleString()}</td>
+          <td style="text-align:center;">
+            <button class="btn btn-danger btn-sm" onclick="deleteAccount(${idx})">削除</button>
+          </td>
         </tr>
       `).join("");
 
@@ -948,6 +1168,77 @@
       renderChart(history);
     }
 
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    // ----------------------------------------------------
+    // Account Editing Actions
+    // ----------------------------------------------------
+    function addNewAccount() {
+      const name = document.getElementById("newAccountName").value.trim();
+      const type = document.getElementById("newAccountType").value;
+      const bal = parseInt(document.getElementById("newAccountBalance").value) || 0;
+
+      if (!name) {
+        alert("口座名称を入力してください。");
+        return;
+      }
+
+      const newId = "acc_" + Date.now();
+      const accounts = getCurrentAccounts();
+      accounts.push({ id: newId, name: name, type: type, balance: bal });
+
+      document.getElementById("newAccountName").value = "";
+      document.getElementById("newAccountBalance").value = "";
+
+      saveStorage();
+      renderAll();
+      simulateExitStrategy();
+      runAiDiagnosis();
+      showToast(`口座「${name}」を追加しました`);
+    }
+
+    function updateAccountName(index, newName) {
+      const accounts = getCurrentAccounts();
+      if (accounts[index] && newName.trim()) {
+        accounts[index].name = newName.trim();
+        saveStorage();
+        renderAll();
+        showToast("口座名を更新しました");
+      }
+    }
+
+    function updateAccountType(index, newType) {
+      const accounts = getCurrentAccounts();
+      if (accounts[index]) {
+        accounts[index].type = newType;
+        saveStorage();
+        renderAll();
+        simulateExitStrategy();
+        runAiDiagnosis();
+        showToast("口座種別を変更しました");
+      }
+    }
+
+    function deleteAccount(index) {
+      const accounts = getCurrentAccounts();
+      if (accounts.length <= 1) {
+        alert("最低1つの口座が必要です。");
+        return;
+      }
+      if (!confirm(`口座「${accounts[index].name}」を削除しますか？`)) return;
+      accounts.splice(index, 1);
+      saveStorage();
+      renderAll();
+      simulateExitStrategy();
+      runAiDiagnosis();
+      showToast("口座を削除しました");
+    }
+
+    // ----------------------------------------------------
+    // Chart Rendering
+    // ----------------------------------------------------
     function renderChart(history) {
       const ctx = document.getElementById("trendChart").getContext("2d");
       const labels = history.map(h => h.date);
@@ -1018,9 +1309,9 @@
     function switchMode(m) {
       appState.mode = m;
       saveStorage();
-      syncFormFields();
       renderAll();
       simulateExitStrategy();
+      runAiDiagnosis();
       showToast(`${m === 'self' ? '単身モード' : '世帯モード'}に切り替えました`);
     }
 
@@ -1034,30 +1325,21 @@
       if (el) el.classList.add("active");
     }
 
-    function syncFormFields() {
-      const isSelf = appState.mode === "self";
-      const accs = isSelf ? appState.accountsSelf : appState.accountsHousehold;
-      accs.forEach(a => {
-        const inp = document.getElementById("input" + a.id.charAt(0).toUpperCase() + a.id.slice(1));
-        if (inp) inp.value = a.balance;
-      });
-    }
-
     // ----------------------------------------------------
     // Save New Balance Snapshot
     // ----------------------------------------------------
     function saveCurrentRecord() {
       const date = document.getElementById("inputRecordDate").value || new Date().toISOString().split("T")[0];
       const isSelf = appState.mode === "self";
-      const accs = isSelf ? appState.accountsSelf : appState.accountsHousehold;
+      const accounts = getCurrentAccounts();
 
-      accs.forEach(a => {
-        const inp = document.getElementById("input" + a.id.charAt(0).toUpperCase() + a.id.slice(1));
+      accounts.forEach(a => {
+        const inp = document.getElementById("accInput_" + a.id);
         if (inp) a.balance = parseInt(inp.value) || 0;
       });
 
       let invest = 0, cash = 0;
-      accs.forEach(a => { if (a.type === "invest") invest += a.balance; else cash += a.balance; });
+      accounts.forEach(a => { if (a.type === "invest") invest += a.balance; else cash += a.balance; });
       const total = invest + cash;
 
       const history = isSelf ? appState.historySelf : appState.historyHousehold;
@@ -1071,6 +1353,8 @@
 
       saveStorage();
       renderAll();
+      simulateExitStrategy();
+      runAiDiagnosis();
       showToast(`${date} の記録を保存しました`);
     }
 
@@ -1084,10 +1368,96 @@
     }
 
     // ----------------------------------------------------
+    // AI Diagnosis & Advice Engine
+    // ----------------------------------------------------
+    function runAiDiagnosis() {
+      const accounts = getCurrentAccounts();
+      let invest = 0, cash = 0;
+      accounts.forEach(a => { if (a.type === "invest") invest += a.balance; else cash += a.balance; });
+      const totalNet = invest + cash;
+
+      const age = parseInt(document.getElementById("aiAgeGroup").value) || 30;
+      const monthlyCost = parseFloat(document.getElementById("aiMonthlyLivingCost").value) || 280000;
+      const riskTolerance = document.getElementById("aiRiskTolerance").value;
+
+      // 1. Wealth Class & Progress
+      let wealthClass = "マス層 (純資産3,000万円未満)";
+      let progressPercent = Math.min(100, Math.max(5, (totalNet / 100000000) * 100));
+      if (totalNet >= 100000000) wealthClass = "富裕層 (1億円以上)";
+      else if (totalNet >= 50000000) wealthClass = "準富裕層 (5,000万円以上)";
+      else if (totalNet >= 30000000) wealthClass = "アッパーマス層 (3,000万円以上)";
+
+      document.getElementById("aiWealthClass").innerText = wealthClass;
+      document.getElementById("aiWealthProgress").style.width = progressPercent + "%";
+
+      // 2. Score Calculation
+      let score = 70;
+      const cushionMonths = monthlyCost > 0 ? (cash / monthlyCost) : 0;
+      if (cushionMonths >= 6 && cushionMonths <= 24) score += 15;
+      else if (cushionMonths < 3) score -= 15;
+
+      const investRatio = totalNet > 0 ? (invest / totalNet) : 0;
+      if (riskTolerance === "high" && investRatio >= 0.7) score += 15;
+      else if (riskTolerance === "mid" && investRatio >= 0.5 && investRatio <= 0.8) score += 15;
+      else if (riskTolerance === "low" && investRatio >= 0.3 && investRatio <= 0.6) score += 15;
+
+      score = Math.min(100, Math.max(40, score));
+      document.getElementById("aiScoreBadge").innerText = `AI健全度スコア: ${score}点 / 100`;
+
+      // 3. Generate Smart Advice Cards
+      const container = document.getElementById("aiAdviceContainer");
+      let cardsHtml = "";
+
+      // Cushion Advice
+      if (cushionMonths < 6) {
+        cardsHtml += `
+          <div class="advice-card warning">
+            <div class="advice-title" style="color:var(--warning-color);">⚠️ 現金クッションの補強を推奨</div>
+            <div class="advice-text">
+              現在の無リスク資産は約 ${Math.round(cushionMonths * 10) / 10} ヶ月分の生活費相当（¥${cash.toLocaleString()}）です。万が一の病気や相場急変に備え、まずは「生活費6ヶ月分（約 ¥${(monthlyCost * 6).toLocaleString()}）」の現金確保を優先しましょう。
+            </div>
+          </div>
+        `;
+      } else {
+        cardsHtml += `
+          <div class="advice-card success">
+            <div class="advice-title" style="color:var(--success-color);">✅ 万全の生活防衛資金を確立</div>
+            <div class="advice-text">
+              生活防衛資金として約 ${Math.round(cushionMonths * 10) / 10} ヶ月分（¥${cash.toLocaleString()}）が確保されています。暴落時にも狼狽売りせずに長期投資を継続できる極めて強固な基盤です。
+            </div>
+          </div>
+        `;
+      }
+
+      // Investment Allocation Advice
+      if (investRatio < 0.4 && totalNet > 5000000) {
+        cardsHtml += `
+          <div class="advice-card purple">
+            <div class="advice-title" style="color:var(--purple-color);">📈 資産成長スピードの加速提案</div>
+            <div class="advice-text">
+              投資比率が ${(investRatio * 100).toFixed(1)}% と控えめです。インフレリスクに対抗するため、新NISA枠（年間最大360万円）の積立余力をさらに引き上げることを検討してください。
+            </div>
+          </div>
+        `;
+      } else {
+        cardsHtml += `
+          <div class="advice-card">
+            <div class="advice-title">💡 バランスのとれたポートフォリオ</div>
+            <div class="advice-text">
+              リスク資産比率は ${(investRatio * 100).toFixed(1)}% です。年利5%を想定した出口戦略シミュレータと連動し、複利効果が最大化される積立ペースを維持しましょう。
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = cardsHtml;
+    }
+
+    // ----------------------------------------------------
     // Exit Strategy & Pension Simulation
     // ----------------------------------------------------
     function simulateExitStrategy() {
-      const accounts = appState.mode === "self" ? appState.accountsSelf : appState.accountsHousehold;
+      const accounts = getCurrentAccounts();
       let curInvest = 0;
       accounts.forEach(a => { if (a.type === "invest") curInvest += a.balance; });
 
@@ -1109,7 +1479,6 @@
         return Math.round(future);
       }
 
-      // Assumption: Current age ~35
       const future50 = calcFuture(15);
       const future60 = calcFuture(25);
 
@@ -1139,7 +1508,6 @@
       const mortgageBal = (parseFloat(document.getElementById("taxMortgageBalance").value) || 0) * 10000;
       const mortgageType = document.getElementById("taxMortgageType").value;
 
-      // Employment income deduction (給与所得控除)
       let empDeduct = 0;
       if (income <= 1625000) empDeduct = 550000;
       else if (income <= 1800000) empDeduct = income * 0.4 - 100000;
@@ -1149,30 +1517,24 @@
       else empDeduct = 1950000;
 
       const kyuyoIncome = Math.max(0, income - empDeduct);
-
-      // Social Insurance (~14.5%)
       const socialIns = Math.round(income * 0.145);
 
-      // Basic deduction (基礎控除: 所得税48万, 住民税43万)
       const basicIncTax = 480000;
       const basicResTax = 430000;
 
-      // Spouse & Dependent deductions
       let spouseInc = 0, spouseRes = 0;
-      if (spouse === "deductible") { spouseInc = 380000; spouseRes = 330000; }
-      else if (spouse === "special") { spouseInc = 380000; spouseRes = 330000; }
+      if (spouse === "deductible" || spouse === "special") {
+        spouseInc = 380000;
+        spouseRes = 330000;
+      }
 
       const depInc = (depGen * 380000) + (depSpec * 630000);
       const depRes = (depGen * 330000) + (depSpec * 450000);
-
-      // iDeCo Deduction (全額所得控除)
       const idecoAnnual = idecoMonthly * 12;
 
-      // Taxable Income
       const taxableIncTax = Math.max(0, kyuyoIncome - socialIns - basicIncTax - spouseInc - depInc - idecoAnnual);
       const taxableResTax = Math.max(0, kyuyoIncome - socialIns - basicResTax - spouseRes - depRes - idecoAnnual);
 
-      // Income Tax calc
       let rawIncomeTax = 0;
       if (taxableIncTax <= 1950000) rawIncomeTax = taxableIncTax * 0.05;
       else if (taxableIncTax <= 3300000) rawIncomeTax = taxableIncTax * 0.10 - 97500;
@@ -1180,12 +1542,9 @@
       else if (taxableIncTax <= 8999000) rawIncomeTax = taxableIncTax * 0.23 - 636000;
       else rawIncomeTax = taxableIncTax * 0.33 - 1536000;
 
-      rawIncomeTax = Math.round(rawIncomeTax * 1.021); // Special reconstruction tax
-
-      // Resident Tax (~10% + 5000均等割)
+      rawIncomeTax = Math.round(rawIncomeTax * 1.021);
       let rawResidentTax = Math.round(taxableResTax * 0.10 + 5000);
 
-      // Mortgage Deduction (住宅ローン控除 0.7%)
       let mortgageCap = 0;
       if (mortgageType === "new_energy") mortgageCap = 315000;
       else if (mortgageType === "general") mortgageCap = 210000;
@@ -1193,7 +1552,6 @@
       const calcMortgageDeduct = Math.min(mortgageBal * 0.007, mortgageCap);
       let incomeTaxReduction = Math.min(rawIncomeTax, calcMortgageDeduct);
       let remainingDeduct = calcMortgageDeduct - incomeTaxReduction;
-      // Resident tax reduction cap: max 97,500
       let residentTaxReduction = Math.min(remainingDeduct, Math.min(rawResidentTax, 97500));
       let totalMortgageReduced = incomeTaxReduction + residentTaxReduction;
 
@@ -1204,14 +1562,10 @@
       const takeHome = income - socialIns - totalTax;
       const takeHomeRate = ((takeHome / income) * 100).toFixed(1);
 
-      // Furusato Nozei Limit estimation
       const furusatoLimit = Math.round((taxableResTax * 0.10 * 0.20) / (0.90 - (rawIncomeTax / Math.max(1, taxableIncTax)) * 1.021) + 2000);
-
-      // iDeCo annual tax saving
       const marginalTaxRate = taxableIncTax > 3300000 ? 0.20 : 0.10;
       const idecoSaving = Math.round(idecoAnnual * (marginalTaxRate * 1.021 + 0.10));
 
-      // Display
       document.getElementById("resTakeHome").innerText = "約 ¥" + Math.round(takeHome).toLocaleString();
       document.getElementById("resTakeHomeRate").innerText = takeHomeRate + "%";
       document.getElementById("resTotalTax").innerText = "約 ¥" + Math.round(totalTax).toLocaleString();
@@ -1226,11 +1580,11 @@
     function getPackedDataString() {
       const payload = {
         m: appState.mode,
-        s: appState.accountsSelf.map(a => a.balance),
-        h: appState.accountsHousehold.map(a => a.balance),
+        s: appState.accountsSelf,
+        h: appState.accountsHousehold,
         t: Date.now()
       };
-      return "AF1:" + btoa(JSON.stringify(payload));
+      return "AF1:" + btoa(encodeURIComponent(JSON.stringify(payload)));
     }
 
     function openSyncModal() {
@@ -1242,8 +1596,7 @@
       const cleanBase = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
       const fullUrl = cleanBase + "#data=" + encodeURIComponent(packed);
 
-      // Generate Clean QR Code
-      const qr = new QRious({
+      new QRious({
         element: document.getElementById("syncQrCanvas"),
         value: fullUrl,
         size: 200,
@@ -1280,7 +1633,6 @@
         return;
       }
 
-      // Check if user accidentally pasted a website URL without data
       if (raw.startsWith("http") && !raw.includes("#data=") && !raw.includes("AF1:")) {
         alert("【入力内容のご確認】\n貼り付けられた文字列は『WebサイトのURL』です。\n\nここはTeamsから届いた『AF1:で始まるデータコード』を取り込む枠です。\n\nPC側の『スマホ同期(QR)』画面で【同期用テキストをコピー】を押して取得した文字列を貼り付けてください。");
         return;
@@ -1303,25 +1655,39 @@
     function decodeAndApplyData(str) {
       try {
         if (!str.startsWith("AF1:")) return false;
-        const jsonStr = atob(str.substring(4));
+        const b64 = str.substring(4);
+        let jsonStr = "";
+        try {
+          jsonStr = decodeURIComponent(atob(b64));
+        } catch (_) {
+          jsonStr = atob(b64);
+        }
         const payload = JSON.parse(jsonStr);
 
         if (payload.s && Array.isArray(payload.s)) {
-          payload.s.forEach((bal, idx) => {
-            if (appState.accountsSelf[idx]) appState.accountsSelf[idx].balance = bal;
-          });
+          if (typeof payload.s[0] === 'object') {
+            appState.accountsSelf = payload.s;
+          } else {
+            payload.s.forEach((bal, idx) => {
+              if (appState.accountsSelf[idx]) appState.accountsSelf[idx].balance = bal;
+            });
+          }
         }
         if (payload.h && Array.isArray(payload.h)) {
-          payload.h.forEach((bal, idx) => {
-            if (appState.accountsHousehold[idx]) appState.accountsHousehold[idx].balance = bal;
-          });
+          if (typeof payload.h[0] === 'object') {
+            appState.accountsHousehold = payload.h;
+          } else {
+            payload.h.forEach((bal, idx) => {
+              if (appState.accountsHousehold[idx]) appState.accountsHousehold[idx].balance = bal;
+            });
+          }
         }
         if (payload.m) appState.mode = payload.m;
 
         saveStorage();
-        syncFormFields();
         renderAll();
         simulateExitStrategy();
+        runAiDiagnosis();
         return true;
       } catch (e) {
         console.error("Decode error", e);
@@ -1348,12 +1714,13 @@
       if (btn) btn.innerText = theme === "dark" ? "ライトモードに切替" : "ダークモードに切替";
     }
 
-    // PWA Service Worker (Inline registration)
+    // PWA Service Worker Ready
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        // Ready for offline caching if SW is present
+        // Offline capability enabled
       });
     }
   </script>
 </body>
 </html>
+```
