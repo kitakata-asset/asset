@@ -27,7 +27,7 @@
       --bg-main: #F5F5F7;
       --card-bg: #FFFFFF;
       --text-main: #1D1D1F;
-      --text-sub: #86868B;
+      --text-sub: #64748B;
       --border-color: rgba(0, 0, 0, 0.08);
       --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
       --accent-blue: #0071E3;
@@ -46,7 +46,7 @@
       background-color: var(--bg-main);
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
-      padding-bottom: 84px;
+      padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
     }
     @media (min-width: 768px) {
       body { padding-bottom: 40px; }
@@ -61,6 +61,18 @@
     .apple-card:hover {
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     }
+
+    /* セーフエリア対応ヘッダー（インカメラ・ノッチ・ダイナミックアイランド対策） */
+    header {
+      padding-top: max(env(safe-area-inset-top, 0px), 12px);
+    }
+
+    /* ボトムナビゲーションのセーフエリア対応 */
+    nav.bottom-nav-safe {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      height: calc(60px + env(safe-area-inset-bottom, 0px));
+    }
+
     .ios-switch {
       position: relative;
       display: inline-block;
@@ -96,13 +108,19 @@
       max-width: 100%;
       -webkit-appearance: none;
     }
+
+    /* マスクモード時のボカシ */
+    .privacy-mask {
+      filter: blur(5px);
+      user-select: none;
+    }
   </style>
 </head>
 <body class="selection:bg-blue-100 selection:text-blue-900 transition-colors duration-200">
 
-  <!-- ヘッダー -->
-  <header class="sticky top-0 z-40 bg-white/85 dark:bg-black/85 backdrop-blur-xl border-b border-black/5 dark:border-white/10">
-    <div class="max-w-5xl mx-auto px-4 md:px-6 py-2.5 flex justify-between items-center">
+  <!-- ヘッダー（スマホインカメラ対応セーフエリアパディング付き） -->
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-4 md:px-6 pb-2.5">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('dashboard')">
         <div class="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-black shadow-xs">
           <i data-lucide="layers" class="w-4 h-4"></i>
@@ -113,40 +131,38 @@
         </div>
       </div>
 
-      <!-- デスクトップ用タブナビゲーション -->
+      <!-- デスクトップ用タブナビゲーション（設定は一番右） -->
       <nav class="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-zinc-800/80 p-1 rounded-full text-xs font-semibold">
         <button onclick="switchTab('dashboard')" id="desk-dashboard" class="px-3 py-1 rounded-full bg-white dark:bg-zinc-700 text-blue-600 dark:text-white shadow-xs">ホーム</button>
         <button onclick="switchTab('update')" id="desk-update" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">残高更新</button>
-        <button onclick="switchTab('profile')" id="desk-profile" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">プロファイル</button>
         <button onclick="switchTab('ai')" id="desk-ai" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">AI診断</button>
         <button onclick="switchTab('tax')" id="desk-tax" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">納税控除</button>
         <button onclick="switchTab('exit')" id="desk-exit" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">出口戦略</button>
-        <button onclick="switchTab('settings')" id="desk-settings" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">設定</button>
+        <button onclick="switchTab('profile')" id="desk-profile" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">設定</button>
       </nav>
 
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-1.5 sm:space-x-2">
+        <!-- マスクモード（目隠し）切替ボタン -->
+        <button onclick="toggleMaskMode()" id="headerMaskBtn" title="金額の目隠し切替" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition border border-black/5 dark:border-white/10">
+          <i data-lucide="eye" class="w-4 h-4" id="headerMaskIcon"></i>
+        </button>
+
         <!-- ダークモード即時切替ボタン -->
         <button onclick="toggleDarkMode()" id="headerThemeBtn" title="外観モード切替" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition border border-black/5 dark:border-white/10">
           <i data-lucide="moon" class="w-4 h-4" id="headerThemeIcon"></i>
         </button>
 
         <!-- 同期QR -->
-        <button onclick="openDataTransferModal()" class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 hover:bg-slate-200 transition border border-black/5">
+        <button onclick="openDataTransferModal()" class="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 hover:bg-slate-200 transition border border-black/5">
           <i data-lucide="qr-code" class="w-3.5 h-3.5 text-blue-600"></i>
           <span class="hidden sm:inline">同期QR</span>
         </button>
 
         <!-- Teams貼付取込 -->
-        <button onclick="openPasteImportModal()" class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition shadow-xs">
+        <button onclick="openPasteImportModal()" class="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition shadow-xs">
           <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
-          <span>Teams貼付</span>
+          <span>貼付取込</span>
         </button>
-
-        <!-- モードバッジ -->
-        <div id="headerModeBadge" class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-black/5">
-          <i data-lucide="user" class="w-3.5 h-3.5" id="headerModeIcon"></i>
-          <span id="headerModeText">単身モード</span>
-        </div>
       </div>
     </div>
   </header>
@@ -230,37 +246,37 @@
     <section id="tab-dashboard" class="space-y-6">
       <div class="flex items-center justify-between px-1">
         <div>
-          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">総資産サマリー</span>
-          <div class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5" id="dashScopeDescription">現在「単身モード（本人のみ）」の資産を表示中</div>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">総資産サマリー</span>
+          <div class="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5" id="dashScopeDescription">現在「単身モード（本人のみ）」の資産を表示中</div>
         </div>
         <button onclick="switchTab('update')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
           <i data-lucide="edit-3" class="w-3.5 h-3.5 mr-1"></i>残高更新へ
         </button>
       </div>
 
-      <!-- KPI カード群 -->
+      <!-- KPI カード群（ライトモードでも文字が濃色でくっきり見える） -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <div class="apple-card p-5 col-span-2 relative overflow-hidden">
           <div class="flex justify-between items-start">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider" id="cardTotalTitle">本人 総資産計</span>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider" id="cardTotalTitle">本人 総資産計</span>
             <span class="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center" id="dashModeIndicatorBadge">
               <i data-lucide="user" class="w-3 h-3 mr-1"></i>単身データ
             </span>
           </div>
           <div class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-2" id="dashTotalAsset">¥26,190,307</div>
-          <div class="text-xs text-slate-400 mt-2 flex items-center">
-            最終記録日: <span id="dashLastSavedDate" class="ml-1 font-semibold text-slate-700 dark:text-zinc-300">2026/09/17</span>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center">
+            最終記録日: <span id="dashLastSavedDate" class="ml-1 font-semibold text-slate-800 dark:text-zinc-200">2026/09/17</span>
           </div>
         </div>
 
         <div class="apple-card p-5">
-          <span class="text-xs font-semibold text-slate-400">証券口座 (投資資産)</span>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">証券口座 (投資資産)</span>
           <div class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-2" id="dashInvestTotal">¥19,066,195</div>
           <div class="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-1" id="dashInvestRatio">投資比率 72.8%</div>
         </div>
 
         <div class="apple-card p-5">
-          <span class="text-xs font-semibold text-slate-400">銀行口座 (現金安全資産)</span>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">銀行口座 (現金安全資産)</span>
           <div class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-2" id="dashCashTotal">¥7,124,112</div>
           <div class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1" id="dashCashRatio">現金比率 27.2%</div>
         </div>
@@ -274,9 +290,9 @@
               <div class="w-6 h-6 rounded-md bg-blue-50 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center">
                 <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
               </div>
-              <h2 class="font-bold text-slate-800 dark:text-white text-sm tracking-tight" id="trendChartTitle">日別・資産推移（全30時点の実績）</h2>
+              <h2 class="font-bold text-slate-900 dark:text-white text-sm tracking-tight" id="trendChartTitle">日別・資産推移（全30時点の実績）</h2>
             </div>
-            <span class="text-[11px] text-slate-400 font-semibold" id="chartPointCountBadge">全30回の記録</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold" id="chartPointCountBadge">全30回の記録</span>
           </div>
           <div class="relative h-64">
             <canvas id="trendChart"></canvas>
@@ -288,7 +304,7 @@
             <div class="w-6 h-6 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 flex items-center justify-center">
               <i data-lucide="pie-chart" class="w-3.5 h-3.5"></i>
             </div>
-            <h2 class="font-bold text-slate-800 dark:text-white text-sm tracking-tight">資産配分比率</h2>
+            <h2 class="font-bold text-slate-900 dark:text-white text-sm tracking-tight">資産配分比率</h2>
           </div>
           <div class="relative h-64 flex items-center justify-center">
             <canvas id="allocationChart"></canvas>
@@ -337,13 +353,13 @@
                 <span class="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-bold px-2 py-0.5 rounded-full">独立グラフ保持</span>
               </div>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                世帯モードに切り替えると、配偶者（妻）の口座を含む世帯合算データと独立した推移グラフを表示します。
+                世帯モードに切り替えると、配偶者の口座を含む世帯合算データと独立した推移グラフを表示します。
               </p>
             </div>
           </div>
 
           <div class="flex items-center space-x-3 self-end sm:self-center bg-white dark:bg-zinc-800 p-2 rounded-2xl border border-black/5 dark:border-white/10 shadow-xs">
-            <span class="text-xs font-bold text-slate-700 dark:text-zinc-200" id="modeSwitchLabel">単身モード</span>
+            <span class="text-xs font-bold text-slate-800 dark:text-zinc-200" id="modeSwitchLabel">単身モード</span>
             <label class="ios-switch">
               <input type="checkbox" id="householdModeToggle" onchange="toggleHouseholdMode(this.checked)">
               <span class="ios-slider"></span>
@@ -360,12 +376,12 @@
               <span>口座残高の直接更新</span>
               <span class="ml-2 text-[10px] bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold" id="inputFormModeBadge">単身データへ保存</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">数値を更新して「記録を保存」を押すと、指定日の履歴として記録・グラフ反映されます。</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">数値を更新して「記録を保存」を押すと、指定日の履歴として記録・グラフ反映されます。</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <div class="flex items-center space-x-1.5 bg-slate-50 dark:bg-zinc-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 max-w-[160px]">
               <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-              <input type="date" id="recordDatePicker" class="text-xs font-medium text-slate-700 dark:text-zinc-200 bg-transparent focus:outline-none w-full">
+              <input type="date" id="recordDatePicker" class="text-xs font-medium text-slate-800 dark:text-zinc-200 bg-transparent focus:outline-none w-full">
             </div>
             <button onclick="saveDirectInputValues()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center shrink-0">
               <i data-lucide="check" class="w-3.5 h-3.5 mr-1"></i>記録を保存
@@ -381,7 +397,7 @@
         <div class="flex justify-between items-center mb-4">
           <div>
             <h2 class="font-bold text-slate-900 dark:text-white text-base">口座のカスタマイズ（名称変更・追加）</h2>
-            <p class="text-xs text-slate-400 mt-0.5">口座名や分類（証券/銀行）、所有者（本人/配偶者）を自由に設定できます。</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">口座名や分類（証券/銀行）、所有者（本人/配偶者）を自由に設定できます。</p>
           </div>
           <button onclick="addNewAccountRow()" class="px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 text-slate-700 dark:text-zinc-300 rounded-xl text-xs font-semibold transition flex items-center">
             <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i>口座を追加
@@ -389,7 +405,7 @@
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-600 dark:text-zinc-300">
-            <thead class="bg-slate-50 dark:bg-zinc-800/50 text-slate-400 uppercase text-[10px] tracking-wider border-b border-black/5 dark:border-white/10">
+            <thead class="bg-slate-50 dark:bg-zinc-800/50 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-black/5 dark:border-white/10">
               <tr>
                 <th class="py-2.5 px-3">口座名称</th>
                 <th class="py-2.5 px-3">所有者</th>
@@ -410,7 +426,7 @@
               <span>保存済みの日別資産履歴</span>
               <span class="ml-2 text-[11px] font-bold text-slate-500" id="historyTableCurrentModeText">（単身モード履歴）</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">全30時点の実績データが蓄積されています。</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">全30時点の実績データが蓄積されています。</p>
           </div>
           <button onclick="clearHistoryConfirm()" class="text-xs text-slate-400 hover:text-rose-600 transition flex items-center">
             <i data-lucide="rotate-ccw" class="w-3 h-3 mr-1"></i>初期実績データに戻す
@@ -418,7 +434,7 @@
         </div>
         <div class="overflow-x-auto max-h-80">
           <table class="w-full text-left text-xs text-slate-600 dark:text-zinc-300">
-            <thead class="sticky top-0 bg-slate-50 dark:bg-zinc-800 text-slate-400 uppercase text-[10px] tracking-wider border-b border-black/5 dark:border-white/10">
+            <thead class="sticky top-0 bg-slate-50 dark:bg-zinc-800 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider border-b border-black/5 dark:border-white/10">
               <tr>
                 <th class="py-2.5 px-3">記録日付</th>
                 <th class="py-2.5 px-3">総資産計</th>
@@ -433,133 +449,14 @@
       </div>
     </section>
 
-    <!-- 3. プロファイル設定（個人・世帯情報） タブ -->
-    <section id="tab-profile" class="hidden space-y-6">
-      <div class="apple-card p-5">
-        <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-4">
-          <div>
-            <h2 class="font-bold text-slate-900 dark:text-white text-base flex items-center">
-              <i data-lucide="user-cog" class="w-4 h-4 mr-2 text-blue-600"></i>プロファイル設定（情報の一括入力）
-            </h2>
-            <p class="text-xs text-slate-400 mt-0.5">ここで入力した基本情報が、AI診断、納税控除、出口戦略に一元反映されます。</p>
-          </div>
-          <button onclick="saveProfileSettings(true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center">
-            <i data-lucide="save" class="w-3.5 h-3.5 mr-1"></i>設定を保存して全反映
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- 年収・家族 -->
-          <div class="p-4 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
-            <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
-              <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>年収・家族構成
-            </h3>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">本人 年齢</label>
-              <input type="number" id="profAge" value="36" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">本人 税込年収 (円)</label>
-              <input type="text" id="profIncomeSelf" value="8,500,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">配偶者 税込年収 (円)</label>
-              <input type="text" id="profIncomeSpouse" value="4,000,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">お子様の人数</label>
-              <select id="profChildrenCount" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-                <option value="0">子どもなし</option>
-                <option value="1" selected>子ども1人</option>
-                <option value="2">子ども2人</option>
-                <option value="3">子ども3人</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">お子様の希望教育進路コース</label>
-              <select id="profEducationCourse" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-                <option value="all_public">すべて公立（約1,000万円/人）</option>
-                <option value="public_univ_private" selected>公立中高 ➔ 私立大（約1,400万円/人）</option>
-                <option value="private_junior_high">私立中高一貫 ➔ 私立大文系（約1,800万円/人）</option>
-                <option value="all_private_science">すべて私立（理系・約2,200万円/人）</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- 居住地・住居費・控除 -->
-          <div class="p-4 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
-            <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
-              <i data-lucide="home" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>居住地・住居・節税控除
-            </h3>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">居住エリア（都道府県・都市）</label>
-              <select id="profResidenceArea" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-                <option value="tokyo_suburb" selected>神奈川県 / 横浜市・川崎市</option>
-                <option value="tokyo_central">東京都 23区</option>
-                <option value="tokyo_city">東京都 市部</option>
-                <option value="saitama">埼玉県 / さいたま市</option>
-                <option value="chiba">千葉県 / 千葉市</option>
-                <option value="kansai">近畿圏（大阪市・神戸市・京都市）</option>
-                <option value="aichi">愛知県 / 名古屋市</option>
-                <option value="other">その他中核都市・地方</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">月額家賃 または ローン返済 (円)</label>
-              <input type="text" id="profHousingMonthly" value="160,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">住宅ローン年末残高 (円・なければ0)</label>
-              <input type="text" id="profMortgageBalance" value="0" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">本人 iDeCo月額掛金 (円)</label>
-              <input type="text" id="profIdecoMonthly" value="20,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-          </div>
-
-          <!-- 年金・投資シミュレーション条件 -->
-          <div class="p-4 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
-            <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
-              <i data-lucide="trending-up" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>年金・運用前提パラメータ
-            </h3>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">本人 公的年金見込月額 (円)</label>
-              <input type="text" id="profPensionSelf" value="160,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">配偶者 公的年金見込月額 (円)</label>
-              <input type="text" id="profPensionSpouse" value="110,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">想定運用年利 (%)</label>
-              <input type="number" id="profReturnRate" step="0.1" value="5.0" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">年間積立初期額 (円・月25万円換算)</label>
-              <input type="text" id="profInvestYearly" value="3,000,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">生活防衛資金キープ額 (円)</label>
-              <input type="text" id="profCashFloor" value="7,000,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500">
-            </div>
-          </div>
-        </div>
-
-        <button onclick="saveProfileSettings(true)" class="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center shadow-xs">
-          <i data-lucide="check-circle" class="w-4 h-4 mr-1.5"></i>この設定を保存して、AI診断・納税・出口戦略へ一元反映
-        </button>
-      </div>
-    </section>
-
-    <!-- 4. AI資産診断・相談 レポート タブ -->
+    <!-- 3. AI資産診断・相談 レポート タブ -->
     <section id="tab-ai" class="hidden space-y-6">
       <!-- 資産ポジション -->
       <div class="apple-card p-5">
         <div class="flex justify-between items-center mb-3">
           <div>
             <h2 class="font-bold text-slate-900 dark:text-white text-base">同世代（30代後半）における資産ポジション</h2>
-            <p class="text-xs text-slate-400 mt-0.5">金融広報中央委員会 調査統計比較（現在資産連動）</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">金融広報中央委員会 家計の金融行動に関する世論調査 統計比較</p>
           </div>
           <span class="px-2.5 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-full border border-amber-200 dark:border-amber-700" id="aiPositionBadge">
             上位 約7%（アッパーマス層）
@@ -568,7 +465,7 @@
         <div class="w-full bg-slate-100 dark:bg-zinc-800 h-3.5 rounded-full overflow-hidden relative">
           <div id="aiPositionBar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-700" style="width: 93%;"></div>
         </div>
-        <div class="flex justify-between text-[11px] text-slate-400 mt-2 font-medium">
+        <div class="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
           <span>同世代 中央値: 約300万円</span>
           <span>同世代 平均値: 約750万円</span>
           <span class="text-blue-600 dark:text-blue-400 font-bold" id="aiCurrentAssetPositionText">現在: 約2,619万円 (上位7%)</span>
@@ -582,7 +479,7 @@
             <i data-lucide="brain-circuit" class="w-4 h-4 mr-2 text-blue-600"></i>AI総合診断レポート
           </h3>
           <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
-            <i data-lucide="settings" class="w-3.5 h-3.5 mr-1"></i>プロファイル条件を変更
+            <i data-lucide="settings" class="w-3.5 h-3.5 mr-1"></i>設定条件を変更
           </button>
         </div>
 
@@ -593,22 +490,19 @@
 
         <!-- 老後年金キャッシュフローカード -->
         <div id="retirementAdviceBox" class="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800"></div>
-
-        <!-- 住居・防衛資金カード -->
-        <div id="housingAdviceBox" class="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-black/5 dark:border-white/10"></div>
       </div>
     </section>
 
-    <!-- 5. 納税・控除シミュレーション タブ -->
+    <!-- 4. 納税・控除シミュレーション タブ（詳細税務・iDeCo・住宅控除ガイド付き） -->
     <section id="tab-tax" class="hidden space-y-6">
       <div class="apple-card p-5">
         <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-4">
           <div>
             <h2 class="font-bold text-slate-900 dark:text-white text-base">納税・所得控除シミュレーション</h2>
-            <p class="text-xs text-slate-400 mt-0.5">プロファイル設定の年収・iDeCo・家族構成から手取りと控除枠を算出</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">年収・iDeCo・家族構成から手取り・節税額・控除枠を算出</p>
           </div>
           <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
-            <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1"></i>年収・控除を変更
+            <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1"></i>年収・控除設定へ
           </button>
         </div>
 
@@ -626,26 +520,39 @@
           </div>
 
           <div class="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800">
-            <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300 block">iDeCoによる年間減税効果</span>
+            <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300 block">iDeCoによる年間節税額</span>
             <div class="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 mt-1" id="taxIdecoSavings">¥72,000</div>
             <p class="text-[11px] text-slate-500 mt-1">所得税・住民税の自動軽減合計</p>
           </div>
         </div>
 
-        <!-- 税務ナレッジカード -->
-        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-black/5 dark:border-white/10 space-y-2">
-          <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
-            <i data-lucide="info" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>税金・控除のポイント
-          </h4>
-          <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-            ・<strong>iDeCoの掛金（月2万円）</strong>は全額所得控除となり、所得税率20%＋住民税率10%の場合、年間約7.2万円の直接的な節税となります。<br>
-            ・ふるさと納税はワンストップ特例または確定申告により、翌年度の住民税から直接控除されます。
-          </p>
+        <!-- 復活：詳細な節税・納税ガイド＆住宅控除解説 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-black/5 dark:border-white/10 space-y-2">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>iDeCo・確定拠出年金の節税ロジック
+            </h4>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+              ・<strong>全額所得控除:</strong> iDeCoの掛金（月20,000円＝年24万円）は課税所得から全額差し引かれます。<br>
+              ・年収850万円の場合、限界税率は<strong>所得税20%＋住民税10%＝約30%</strong>となるため、年間約7.2万円（24万×30%）の手取りが直接増えます。<br>
+              ・運用益も非課税（通常20.315%免除）で、受取時も退職所得控除の対象となります。
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-black/5 dark:border-white/10 space-y-2">
+            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+              <i data-lucide="home" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>住宅ローン控除＆ふるさと納税の優先順位
+            </h4>
+            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+              ・<strong>住宅借入金等特別控除:</strong> 年末残高の0.7%が税額控除されます。所得税から引ききれない場合、<strong>翌年の住民税から最高9.75万円/年</strong>まで差し引かれます。<br>
+              ・<strong>ワンストップ特例 vs 確定申告:</strong> 住宅ローン控除初年度や医療費控除等で確定申告をする場合、ふるさと納税のワンストップ申請は無効になるため、必ず申告書内に寄附金受領証を合算してください。
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 6. 出口戦略・将来推移 タブ -->
+    <!-- 5. 出口戦略・将来推移 タブ（年金定期便ガイド完全復活） -->
     <section id="tab-exit" class="hidden space-y-6">
       <div class="apple-card p-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-black/5 dark:border-white/10 mb-4 gap-2">
@@ -654,7 +561,7 @@
               <h2 class="font-bold text-slate-900 dark:text-white text-base">将来資産推移 & 出口戦略シミュレーション</h2>
               <span class="text-[10px] bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full" id="exitCurrentModeBadge">単身資産連動</span>
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">最新残高（約2,619万円）から60歳までの複利成長（年5%・月25万積立）と4%取崩しをシミュレート</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">最新残高（約2,619万円）から60歳までの複利成長と4%取崩しをシミュレート</p>
           </div>
           <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
             <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1"></i>シミュレーション条件を変更
@@ -665,7 +572,7 @@
           <canvas id="exitProjectionChart"></canvas>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
             <span class="text-xs font-bold text-blue-900 dark:text-blue-300 block">50歳到達時（サイドFIRE目安）</span>
             <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white" id="exitSim50Asset">¥109,648,897</div>
@@ -686,44 +593,171 @@
             <p class="text-[10px] text-slate-400 mt-1">※公的年金（月額約<span id="exitPensionMonthlyDisplay">16</span>万円）がさらに加算されます</p>
           </div>
         </div>
+
+        <!-- 復活：ねんきん定期便のチェックガイド＆公的年金3階層ガイド -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-black/5 dark:border-white/10 space-y-3">
+          <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+            <i data-lucide="file-text" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>「ねんきん定期便」の入手・確認ガイド
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-slate-600 dark:text-slate-300">
+            <div class="p-3 bg-white dark:bg-zinc-800 rounded-xl border border-black/5 dark:border-white/10">
+              <span class="font-bold text-blue-600 block mb-1">① 50歳未満の方の見方</span>
+              定期便の裏面に記載されているのは**「これまでの加入実績に応じた年金額」**（現時点の実績額）です。ここには将来定年までの納付分が含まれていないため、概算見込みは「年金ネット」にログインするか、大卒・平均年収ベース（独身で約15〜17万円/月）を目安に入力してください。
+            </div>
+            <div class="p-3 bg-white dark:bg-zinc-800 rounded-xl border border-black/5 dark:border-white/10">
+              <span class="font-bold text-emerald-600 block mb-1">② 50歳以上の方の見方</span>
+              50歳以上の定期便には**「現在の加入条件が60歳まで継続した場合の見込額」**が記載されます。右上の「年金見込額（年額）」を12で割った金額をそのまま本アプリの年金欄へ入力することで、極めて精密な試算が可能です。
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- 7. 外観・設定・利用規約 タブ -->
-    <section id="tab-settings" class="hidden space-y-6">
-      <!-- 外観テーマ設定 -->
+    <!-- 6. プロファイル・外観・規約 設定 タブ（最右端に配置） -->
+    <section id="tab-profile" class="hidden space-y-6">
       <div class="apple-card p-5">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-4">
+          <div>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base flex items-center">
+              <i data-lucide="user-cog" class="w-4 h-4 mr-2 text-blue-600"></i>基本設定・プロファイル情報
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">ここで入力した情報が、AI診断、納税控除、出口戦略に一元反映されます。</p>
+          </div>
+          <button onclick="saveProfileSettings(true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center">
+            <i data-lucide="save" class="w-3.5 h-3.5 mr-1"></i>設定を保存
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- 年収・家族 -->
+          <div class="p-4 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+              <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>年収・家族構成
+            </h3>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">本人 年齢</label>
+              <input type="number" id="profAge" value="36" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">本人 税込年収 (円)</label>
+              <input type="text" id="profIncomeSelf" value="8,500,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">配偶者 税込年収 (円)</label>
+              <input type="text" id="profIncomeSpouse" value="4,000,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">お子様の人数</label>
+              <select id="profChildrenCount" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+                <option value="0">子どもなし</option>
+                <option value="1" selected>子ども1人</option>
+                <option value="2">子ども2人</option>
+                <option value="3">子ども3人</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">お子様の希望教育進路コース</label>
+              <select id="profEducationCourse" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+                <option value="all_public">すべて公立（約1,000万円/人）</option>
+                <option value="public_univ_private" selected>公立中高 ➔ 私立大（約1,400万円/人）</option>
+                <option value="private_junior_high">私立中高一貫 ➔ 私立大文系（約1,800万円/人）</option>
+                <option value="all_private_science">すべて私立（理系・約2,200万円/人）</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 居住地・住居費・控除 -->
+          <div class="p-4 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+              <i data-lucide="home" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>居住地・住居・節税控除
+            </h3>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">居住エリア（都道府県・都市）</label>
+              <select id="profResidenceArea" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+                <option value="tokyo_suburb" selected>神奈川県 / 横浜市・川崎市</option>
+                <option value="tokyo_central">東京都 23区</option>
+                <option value="tokyo_city">東京都 市部</option>
+                <option value="saitama">埼玉県 / さいたま市</option>
+                <option value="chiba">千葉県 / 千葉市</option>
+                <option value="kansai">近畿圏（大阪市・神戸市・京都市）</option>
+                <option value="aichi">愛知県 / 名古屋市</option>
+                <option value="other">その他中核都市・地方</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">月額家賃 または ローン返済 (円)</label>
+              <input type="text" id="profHousingMonthly" value="160,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">住宅ローン年末残高 (円・なければ0)</label>
+              <input type="text" id="profMortgageBalance" value="0" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">本人 iDeCo月額掛金 (円)</label>
+              <input type="text" id="profIdecoMonthly" value="20,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+          </div>
+
+          <!-- 年金・投資シミュレーション条件 -->
+          <div class="p-4 bg-slate-50/70 dark:bg-zinc-800/40 rounded-2xl border border-black/5 dark:border-white/10 space-y-3">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>年金・運用前提パラメータ
+            </h3>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">本人 公的年金見込月額 (円)</label>
+              <input type="text" id="profPensionSelf" value="160,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">配偶者 公的年金見込月額 (円)</label>
+              <input type="text" id="profPensionSpouse" value="110,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">想定運用年利 (%)</label>
+              <input type="number" id="profReturnRate" step="0.1" value="5.0" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">年間積立初期額 (円・月25万円換算)</label>
+              <input type="text" id="profInvestYearly" value="3,000,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-500 block mb-1">生活防衛資金キープ額 (円)</label>
+              <input type="text" id="profCashFloor" value="7,000,000" oninput="formatCommaInput(this)" class="w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-blue-500 text-slate-900 dark:text-white">
+            </div>
+          </div>
+        </div>
+
+        <button onclick="saveProfileSettings(true)" class="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center shadow-xs">
+          <i data-lucide="check-circle" class="w-4 h-4 mr-1.5"></i>この設定を保存して、AI診断・納税・出口戦略へ一元反映
+        </button>
+      </div>
+
+      <!-- 外観・PWA・利用規約 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 外観設定カード -->
+        <div class="apple-card p-5 flex justify-between items-center">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center">
               <i data-lucide="moon" class="w-5 h-5"></i>
             </div>
             <div>
               <h3 class="font-bold text-slate-900 dark:text-white text-base">外観テーマ設定</h3>
-              <p class="text-xs text-slate-400">ライトモード / ダークモードを切り替えます</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">ライト / ダークモード切替</p>
             </div>
           </div>
           <button onclick="toggleDarkMode()" id="themeToggleBtn" class="px-4 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded-xl text-xs font-semibold transition flex items-center border border-black/5 dark:border-white/10">
             <i data-lucide="moon" class="w-4 h-4 mr-1.5"></i>ダークモードへ
           </button>
         </div>
-      </div>
 
-      <!-- PWA・ホーム画面追加ガイド -->
-      <div class="apple-card p-5 space-y-3">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center">
+        <!-- PWAガイドカード -->
+        <div class="apple-card p-5 flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center shrink-0">
             <i data-lucide="download" class="w-5 h-5"></i>
           </div>
-          <div>
-            <h3 class="font-bold text-slate-900 dark:text-white text-base">スマホ・アプリインストール対応 (PWA)</h3>
-            <p class="text-xs text-slate-400">ホーム画面に追加してフルスクリーン単独アプリとして利用可能</p>
+          <div class="text-xs text-slate-600 dark:text-slate-300">
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm">PWAアプリ利用</h3>
+            <p class="mt-0.5">Safariの「ホーム画面に追加」でアドレスバーのない単独全画面アプリとして起動します。</p>
           </div>
-        </div>
-        <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-zinc-800/40 p-3 rounded-xl border border-black/5 dark:border-white/10 space-y-1.5">
-          <p><strong>・iPhone (Safari) の場合:</strong> 画面下部の共有ボタン（四角から上矢印）をタップし、メニューから<strong>「ホーム画面に追加」</strong>を選択します。</p>
-          <p><strong>・Android (Chrome) の場合:</strong> 右上の3点メニューから<strong>「アプリをインストール」</strong>または<strong>「ホーム画面に追加」</strong>をタップします。</p>
-          <p class="text-[11px] text-slate-400 mt-1">※ホーム画面に追加すると、URLバーのない全画面アプリとして起動します。</p>
         </div>
       </div>
 
@@ -735,39 +769,39 @@
         <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 max-h-48 overflow-y-auto p-3 bg-slate-50 dark:bg-zinc-800/40 rounded-xl border border-black/5 dark:border-white/10">
           <p><strong>1. 本ツールの性質と投資助言規制について</strong><br>本アプリケーションは、個人が自身の家計および金融資産状況を可視化・試算するためのシミュレーションツールです。金融商品取引法に基づく「投資助言業」に該当するものではなく、特定の有価証券の購入や投資方針の決定を推奨・勧誘するものではありません。</p>
           <p><strong>2. データの機密性とセキュリティ</strong><br>入力された口座残高、個人年収、家族構成などのデータは、すべて利用者の端末内（ブラウザのLocalStorage）および画面表示されるQRコード内にのみ保存されます。外部サーバー等へ送信・収集されることは一切ありません。</p>
-          <p><strong>3. 免責条項</strong><br>シミュレーションの計算結果（将来資産推移、4%取崩し額、節税額、ふるさと納税上限額等）は、一定の仮定に基づく推計であり、将来の運用成果や税務上の正確性を保証するものではありません。投資判断および実際の納税申告はご自身の責任において行ってください。</p>
+          <p><strong>3. 免責条項</strong><br>シミュレーションの計算結果（将来資産推移、4%取崩し額、節税額、ふるさと納税上限額等）は、一定の仮定に基づく推計であり、将来の運用成果や税務上の正確性を保証するものではありません。</p>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- ボトムタブナビゲーション（スマホ親指最適化） -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-black/5 dark:border-white/10">
-    <div class="max-w-md mx-auto grid grid-cols-6 h-16">
+  <!-- ボトムタブナビゲーション（設定ボタンを一番右に配置） -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-black/5 dark:border-white/10 bottom-nav-safe">
+    <div class="max-w-md mx-auto grid grid-cols-6 h-14">
       <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center text-blue-600 transition">
-        <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+        <i data-lucide="home" class="w-5 h-5 mb-0.5"></i>
         <span class="text-[9px] font-bold">ホーム</span>
       </button>
       <button onclick="switchTab('update')" id="nav-update" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
-        <i data-lucide="edit" class="w-5 h-5 mb-1"></i>
+        <i data-lucide="edit" class="w-5 h-5 mb-0.5"></i>
         <span class="text-[9px] font-medium">残高</span>
       </button>
-      <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
-        <i data-lucide="user-cog" class="w-5 h-5 mb-1"></i>
-        <span class="text-[9px] font-medium">設定</span>
-      </button>
       <button onclick="switchTab('ai')" id="nav-ai" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
-        <i data-lucide="sparkles" class="w-5 h-5 mb-1"></i>
+        <i data-lucide="sparkles" class="w-5 h-5 mb-0.5"></i>
         <span class="text-[9px] font-medium">AI診断</span>
       </button>
       <button onclick="switchTab('tax')" id="nav-tax" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
-        <i data-lucide="receipt" class="w-5 h-5 mb-1"></i>
+        <i data-lucide="receipt" class="w-5 h-5 mb-0.5"></i>
         <span class="text-[9px] font-medium">納税</span>
       </button>
       <button onclick="switchTab('exit')" id="nav-exit" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
-        <i data-lucide="trending-up" class="w-5 h-5 mb-1"></i>
+        <i data-lucide="trending-up" class="w-5 h-5 mb-0.5"></i>
         <span class="text-[9px] font-medium">出口</span>
+      </button>
+      <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
+        <i data-lucide="settings" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[9px] font-medium">設定</span>
       </button>
     </div>
   </nav>
@@ -848,6 +882,7 @@
     let appState = {
       isHouseholdMode: false,
       isDarkMode: false,
+      isMasked: false, // マスクモード
       webAppUrl: "https://kitakata-asset.github.io/asset/",
       accounts: JSON.parse(JSON.stringify(INITIAL_ACCOUNTS)),
       historySelf: JSON.parse(JSON.stringify(INITIAL_HISTORY_SELF)),
@@ -878,7 +913,9 @@
       return appState.isHouseholdMode ? appState.historyHousehold : appState.historySelf;
     }
 
+    // 金額フォーマット（マスクモード連動）
     function formatCurrency(num) {
+      if (appState.isMasked) return "¥ ••••••••";
       return "¥" + Math.round(num).toLocaleString('ja-JP');
     }
 
@@ -894,7 +931,7 @@
     }
 
     function loadSavedState() {
-      const saved = localStorage.getItem('assetflow_state_v4');
+      const saved = localStorage.getItem('assetflow_state_v4_1');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -904,23 +941,46 @@
           if (parsed.profile) appState.profile = parsed.profile;
           if (typeof parsed.isHouseholdMode === 'boolean') appState.isHouseholdMode = parsed.isHouseholdMode;
           if (typeof parsed.isDarkMode === 'boolean') appState.isDarkMode = parsed.isDarkMode;
+          if (typeof parsed.isMasked === 'boolean') appState.isMasked = parsed.isMasked;
         } catch (e) {
           console.error("Local data parse error", e);
         }
       }
       applyTheme();
+      updateMaskUI();
     }
 
     function saveStateToLocal() {
-      localStorage.setItem('assetflow_state_v4', JSON.stringify({
+      localStorage.setItem('assetflow_state_v4_1', JSON.stringify({
         accounts: appState.accounts,
         historySelf: appState.historySelf,
         historyHousehold: appState.historyHousehold,
         profile: appState.profile,
         isHouseholdMode: appState.isHouseholdMode,
         isDarkMode: appState.isDarkMode,
+        isMasked: appState.isMasked,
         webAppUrl: appState.webAppUrl
       }));
+    }
+
+    // マスクモード切替
+    function toggleMaskMode() {
+      appState.isMasked = !appState.isMasked;
+      updateMaskUI();
+      saveStateToLocal();
+      updateDashboard();
+      renderAiDiagnosis();
+      renderTaxCalculations();
+      renderExitStrategy();
+      renderHistoryTable();
+    }
+
+    function updateMaskUI() {
+      const maskIcon = document.getElementById('headerMaskIcon');
+      if (maskIcon) {
+        maskIcon.setAttribute('data-lucide', appState.isMasked ? 'eye-off' : 'eye');
+        lucide.createIcons();
+      }
     }
 
     function applyTheme() {
@@ -943,10 +1003,11 @@
       applyTheme();
       saveStateToLocal();
       updateDashboard();
+      renderExitStrategy();
     }
 
     function switchTab(tabKey) {
-      const tabs = ['dashboard', 'update', 'profile', 'ai', 'tax', 'exit', 'settings'];
+      const tabs = ['dashboard', 'update', 'ai', 'tax', 'exit', 'profile'];
       tabs.forEach(t => {
         const el = document.getElementById(`tab-${t}`);
         const nav = document.getElementById(`nav-${t}`);
@@ -985,8 +1046,6 @@
 
     function toggleHouseholdMode(isHousehold) {
       appState.isHouseholdMode = isHousehold;
-      const badgeText = document.getElementById('headerModeText');
-      const badgeIcon = document.getElementById('headerModeIcon');
       const switchLabel = document.getElementById('modeSwitchLabel');
       const scopeDesc = document.getElementById('dashScopeDescription');
       const totalTitle = document.getElementById('cardTotalTitle');
@@ -997,8 +1056,6 @@
       const exitModeBadge = document.getElementById('exitCurrentModeBadge');
 
       if (isHousehold) {
-        badgeText.innerText = '世帯モード';
-        badgeIcon.setAttribute('data-lucide', 'users');
         switchLabel.innerText = '世帯モード';
         scopeDesc.innerText = '現在「世帯全体（本人＋配偶者）」の合算資産・推移を表示中';
         totalTitle.innerText = '世帯 総資産計';
@@ -1009,8 +1066,6 @@
         exitModeBadge.innerText = '世帯資産連動';
         exitModeBadge.className = 'text-[10px] bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded-full';
       } else {
-        badgeText.innerText = '単身モード';
-        badgeIcon.setAttribute('data-lucide', 'user');
         switchLabel.innerText = '単身モード';
         scopeDesc.innerText = '現在「単身モード（本人のみ）」の資産・推移を表示中';
         totalTitle.innerText = '本人 総資産計';
@@ -1137,8 +1192,20 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { ticks: { callback: v => '¥' + v + '万', font: { size: 9 } } },
-            x: { ticks: { font: { size: 8 }, maxTicksLimit: 10 } }
+            y: {
+              ticks: {
+                callback: v => appState.isMasked ? '•••' : ('¥' + v + '万'),
+                font: { size: 9 },
+                color: appState.isDarkMode ? '#98989D' : '#64748B'
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 8 },
+                maxTicksLimit: 10,
+                color: appState.isDarkMode ? '#98989D' : '#64748B'
+              }
+            }
           }
         }
       });
@@ -1159,7 +1226,7 @@
             </div>
             <div class="flex items-center space-x-1.5">
               <span class="text-slate-400">¥</span>
-              <input type="text" id="inputBal_${acc.id}" value="${acc.balance.toLocaleString('ja-JP')}" oninput="formatCommaInput(this)" class="w-28 sm:w-36 bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 rounded-lg px-2 py-1 text-right font-bold text-slate-800 dark:text-zinc-100 focus:outline-blue-500">
+              <input type="text" id="inputBal_${acc.id}" value="${acc.balance.toLocaleString('ja-JP')}" oninput="formatCommaInput(this)" class="w-28 sm:w-36 bg-white dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 rounded-lg px-2 py-1 text-right font-bold text-slate-900 dark:text-zinc-100 focus:outline-blue-500">
             </div>
           </div>
         `;
@@ -1215,8 +1282,8 @@
           <tr class="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
             <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-zinc-200">${item.date}</td>
             <td class="py-2.5 px-3 font-extrabold text-slate-900 dark:text-white">${formatCurrency(item.total)}</td>
-            <td class="py-2.5 px-3 text-blue-600 dark:text-blue-400">${formatCurrency(item.invest)}</td>
-            <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400">${formatCurrency(item.cash)}</td>
+            <td class="py-2.5 px-3 text-blue-600 dark:text-blue-400 font-bold">${formatCurrency(item.invest)}</td>
+            <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-bold">${formatCurrency(item.cash)}</td>
             <td class="py-2.5 px-3 text-right">
               <button onclick="removeHistoryItem(${realIdx})" class="text-rose-500 hover:text-rose-700 p-1">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -1257,16 +1324,16 @@
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition">
             <td class="py-2.5 px-3">
-              <input type="text" value="${acc.name}" onchange="appState.accounts[${idx}].name = this.value; saveStateToLocal(); updateDashboard();" class="w-full bg-transparent border-b border-dashed border-slate-300 dark:border-zinc-700 focus:border-blue-500 font-semibold text-slate-800 dark:text-zinc-200">
+              <input type="text" value="${acc.name}" onchange="appState.accounts[${idx}].name = this.value; saveStateToLocal(); updateDashboard();" class="w-full bg-transparent border-b border-dashed border-slate-300 dark:border-zinc-700 focus:border-blue-500 font-semibold text-slate-900 dark:text-zinc-200">
             </td>
             <td class="py-2.5 px-3">
-              <select onchange="appState.accounts[${idx}].owner = this.value; saveStateToLocal(); updateDashboard();" class="bg-transparent border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[11px]">
+              <select onchange="appState.accounts[${idx}].owner = this.value; saveStateToLocal(); updateDashboard();" class="bg-transparent border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[11px] text-slate-800 dark:text-zinc-200">
                 <option value="self" ${acc.owner === 'self' ? 'selected' : ''}>本人</option>
                 <option value="wife" ${acc.owner === 'wife' ? 'selected' : ''}>配偶者</option>
               </select>
             </td>
             <td class="py-2.5 px-3">
-              <select onchange="appState.accounts[${idx}].type = this.value; saveStateToLocal(); updateDashboard();" class="bg-transparent border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[11px]">
+              <select onchange="appState.accounts[${idx}].type = this.value; saveStateToLocal(); updateDashboard();" class="bg-transparent border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[11px] text-slate-800 dark:text-zinc-200">
                 <option value="securities" ${acc.type === 'securities' ? 'selected' : ''}>証券 (投資)</option>
                 <option value="bank" ${acc.type === 'bank' ? 'selected' : ''}>銀行 (現預金)</option>
               </select>
@@ -1352,7 +1419,7 @@
       const badge = document.getElementById('aiPositionBadge');
       if (badge) badge.innerText = `上位 約${100 - pct}%（${layerName}）`;
       const posText = document.getElementById('aiCurrentAssetPositionText');
-      if (posText) posText.innerText = `現在: 約${assetInMan.toLocaleString()}万円 (上位${100 - pct}%)`;
+      if (posText) posText.innerText = appState.isMasked ? `現在: ¥•••••• (上位${100 - pct}%)` : `現在: 約${assetInMan.toLocaleString()}万円 (上位${100 - pct}%)`;
 
       // アドバイスカード
       const cards = document.getElementById('aiAdviceCards');
@@ -1400,7 +1467,7 @@
           </h4>
           <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
             選択コース想定総額: 約<strong>${totalEduCost.toLocaleString()}万円</strong>（1人あたり約${perChildCost}万円）。<br>
-            現在の資産規模（約2,619万円）と毎月積立力があれば、大学進学ピーク時の資金（1人あたり500〜800万円）を生活防衛資金を崩すことなく十分カバー可能です。
+            現在の資産規模と毎月積立力があれば、大学進学ピーク時の資金（1人あたり500〜800万円）を生活防衛資金を崩すことなく十分カバー可能です。
           </p>
         `;
       }
@@ -1496,7 +1563,7 @@
       document.getElementById('exitSim60Monthly').innerText = formatCurrency((asset60 * 0.04) / 12);
 
       const totalPen = appState.profile.pensionSelf + (appState.isHouseholdMode ? appState.profile.pensionSpouse : 0);
-      document.getElementById('exitPensionMonthlyDisplay').innerText = (totalPen / 10000).toFixed(0);
+      document.getElementById('exitPensionMonthlyDisplay').innerText = appState.isMasked ? '••' : (totalPen / 10000).toFixed(0);
 
       const ctxExit = document.getElementById('exitProjectionChart').getContext('2d');
       if (exitChart) exitChart.destroy();
@@ -1528,8 +1595,19 @@
           maintainAspectRatio: false,
           plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 } } } },
           scales: {
-            y: { ticks: { callback: v => '¥' + v + '万', font: { size: 9 } } },
-            x: { ticks: { font: { size: 9 } } }
+            y: {
+              ticks: {
+                callback: v => appState.isMasked ? '•••' : ('¥' + v + '万'),
+                font: { size: 9 },
+                color: appState.isDarkMode ? '#98989D' : '#64748B'
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 9 },
+                color: appState.isDarkMode ? '#98989D' : '#64748B'
+              }
+            }
           }
         }
       });
