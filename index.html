@@ -2,14 +2,16 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AssetFlow">
   <meta name="theme-color" content="#0071E3">
   <title>AssetFlow - 資産管理</title>
-  
-  <!-- PWA Web App Manifest -->
-  <link rel="manifest" href='data:application/manifest+json,{"name":"AssetFlow","short_name":"AssetFlow","start_url":".","display":"standalone","background_color":"#F5F5F7","theme_color":"#0071E3","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22128%22 fill=%22%230071E3%22/%3E%3Cpath d=%22M140 360 L220 280 L290 330 L380 180%22 stroke=%22white%22 stroke-width=%2240%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/%3E%3Ccircle cx=%22380%22 cy=%22180%22 r=%2224%22 fill=%22white%22/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+
+  <!-- PWA Web App Manifest (Data URI) -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"AssetFlow 資産管理","short_name":"AssetFlow","start_url":".","display":"standalone","background_color":"#F5F5F7","theme_color":"#0071E3","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22128%22 fill=%22%230071E3%22/%3E%3Cpath d=%22M140 360 L220 280 L290 330 L380 180%22 stroke=%22white%22 stroke-width=%2240%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/%3E%3Ccircle cx=%22380%22 cy=%22180%22 r=%2224%22 fill=%22white%22/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+  <link rel="apple-touch-icon" href='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22128%22 fill=%22%230071E3%22/%3E%3Cpath d=%22M140 360 L220 280 L290 330 L380 180%22 stroke=%22white%22 stroke-width=%2240%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/%3E%3Ccircle cx=%22380%22 cy=%22180%22 r=%2224%22 fill=%22white%22/%3E%3C/svg%3E'>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- QRious (完全クライアント動作) -->
+  <!-- QRious -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
   <style>
@@ -44,10 +46,10 @@
       background-color: var(--bg-main);
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
-      padding-bottom: 96px;
+      padding-bottom: 84px;
     }
     @media (min-width: 768px) {
-      body { padding-bottom: 48px; }
+      body { padding-bottom: 40px; }
     }
     .apple-card {
       background: var(--card-bg);
@@ -96,26 +98,42 @@
     }
   </style>
 </head>
-<body class="selection:bg-blue-100 selection:text-blue-900">
+<body class="selection:bg-blue-100 selection:text-blue-900 transition-colors duration-200">
 
   <!-- ヘッダー -->
-  <header class="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-black/5 dark:border-white/10">
-    <div class="max-w-5xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2.5">
+  <header class="sticky top-0 z-40 bg-white/85 dark:bg-black/85 backdrop-blur-xl border-b border-black/5 dark:border-white/10">
+    <div class="max-w-5xl mx-auto px-4 md:px-6 py-2.5 flex justify-between items-center">
+      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('dashboard')">
         <div class="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-black shadow-xs">
           <i data-lucide="layers" class="w-4 h-4"></i>
         </div>
         <div>
-          <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">AssetFlow</h1>
+          <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight">AssetFlow</h1>
           <p class="text-[10px] text-slate-400 font-medium">kitakata-asset</p>
         </div>
       </div>
 
+      <!-- デスクトップ用タブナビゲーション -->
+      <nav class="hidden md:flex items-center space-x-1 bg-slate-100/80 dark:bg-zinc-800/80 p-1 rounded-full text-xs font-semibold">
+        <button onclick="switchTab('dashboard')" id="desk-dashboard" class="px-3 py-1 rounded-full bg-white dark:bg-zinc-700 text-blue-600 dark:text-white shadow-xs">ホーム</button>
+        <button onclick="switchTab('update')" id="desk-update" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">残高更新</button>
+        <button onclick="switchTab('profile')" id="desk-profile" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">プロファイル</button>
+        <button onclick="switchTab('ai')" id="desk-ai" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">AI診断</button>
+        <button onclick="switchTab('tax')" id="desk-tax" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">納税控除</button>
+        <button onclick="switchTab('exit')" id="desk-exit" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">出口戦略</button>
+        <button onclick="switchTab('settings')" id="desk-settings" class="px-3 py-1 rounded-full text-slate-600 dark:text-zinc-300 hover:text-slate-900">設定</button>
+      </nav>
+
       <div class="flex items-center space-x-2">
+        <!-- ダークモード即時切替ボタン -->
+        <button onclick="toggleDarkMode()" id="headerThemeBtn" title="外観モード切替" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition border border-black/5 dark:border-white/10">
+          <i data-lucide="moon" class="w-4 h-4" id="headerThemeIcon"></i>
+        </button>
+
         <!-- 同期QR -->
         <button onclick="openDataTransferModal()" class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 hover:bg-slate-200 transition border border-black/5">
           <i data-lucide="qr-code" class="w-3.5 h-3.5 text-blue-600"></i>
-          <span>同期QR</span>
+          <span class="hidden sm:inline">同期QR</span>
         </button>
 
         <!-- Teams貼付取込 -->
@@ -125,7 +143,7 @@
         </button>
 
         <!-- モードバッジ -->
-        <div id="headerModeBadge" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-black/5">
+        <div id="headerModeBadge" class="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-black/5">
           <i data-lucide="user" class="w-3.5 h-3.5" id="headerModeIcon"></i>
           <span id="headerModeText">単身モード</span>
         </div>
@@ -208,15 +226,15 @@
   <!-- メインコンテンツ -->
   <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
 
-    <!-- 1. ダッシュボード（概観） タブ -->
+    <!-- 1. ホーム（旧：概観・ダッシュボード） タブ -->
     <section id="tab-dashboard" class="space-y-6">
       <div class="flex items-center justify-between px-1">
         <div>
           <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">総資産サマリー</span>
           <div class="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5" id="dashScopeDescription">現在「単身モード（本人のみ）」の資産を表示中</div>
         </div>
-        <button onclick="switchTab('update')" class="text-xs text-blue-600 font-semibold hover:underline flex items-center">
-          <i data-lucide="edit-3" class="w-3.5 h-3.5 mr-1"></i>残高更新
+        <button onclick="switchTab('update')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5 mr-1"></i>残高更新へ
         </button>
       </div>
 
@@ -238,13 +256,13 @@
         <div class="apple-card p-5">
           <span class="text-xs font-semibold text-slate-400">証券口座 (投資資産)</span>
           <div class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-2" id="dashInvestTotal">¥19,066,195</div>
-          <div class="text-xs font-semibold text-blue-600 mt-1" id="dashInvestRatio">投資比率 72.8%</div>
+          <div class="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-1" id="dashInvestRatio">投資比率 72.8%</div>
         </div>
 
         <div class="apple-card p-5">
           <span class="text-xs font-semibold text-slate-400">銀行口座 (現金安全資産)</span>
           <div class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-2" id="dashCashTotal">¥7,124,112</div>
-          <div class="text-xs font-semibold text-emerald-600 mt-1" id="dashCashRatio">現金比率 27.2%</div>
+          <div class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1" id="dashCashRatio">現金比率 27.2%</div>
         </div>
       </div>
 
@@ -306,7 +324,6 @@
 
     <!-- 2. 残高更新・口座管理 タブ -->
     <section id="tab-update" class="hidden space-y-6">
-
       <!-- 単身／世帯モード切替 -->
       <div class="apple-card p-5 bg-gradient-to-br from-white via-white to-slate-50 dark:from-zinc-900 dark:to-zinc-800">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -416,7 +433,7 @@
       </div>
     </section>
 
-    <!-- 3. プロファイル設定（個人・世帯情報） タブ 【新設】 -->
+    <!-- 3. プロファイル設定（個人・世帯情報） タブ -->
     <section id="tab-profile" class="hidden space-y-6">
       <div class="apple-card p-5">
         <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-4">
@@ -535,7 +552,7 @@
       </div>
     </section>
 
-    <!-- 4. AI資産診断・相談 レポート タブ（表示特化） -->
+    <!-- 4. AI資産診断・相談 レポート タブ -->
     <section id="tab-ai" class="hidden space-y-6">
       <!-- 資産ポジション -->
       <div class="apple-card p-5">
@@ -554,7 +571,7 @@
         <div class="flex justify-between text-[11px] text-slate-400 mt-2 font-medium">
           <span>同世代 中央値: 約300万円</span>
           <span>同世代 平均値: 約750万円</span>
-          <span class="text-blue-600 font-bold" id="aiCurrentAssetPositionText">現在: 約2,619万円 (上位7%)</span>
+          <span class="text-blue-600 dark:text-blue-400 font-bold" id="aiCurrentAssetPositionText">現在: 約2,619万円 (上位7%)</span>
         </div>
       </div>
 
@@ -564,7 +581,7 @@
           <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center">
             <i data-lucide="brain-circuit" class="w-4 h-4 mr-2 text-blue-600"></i>AI総合診断レポート
           </h3>
-          <button onclick="switchTab('profile')" class="text-xs text-blue-600 font-semibold hover:underline flex items-center">
+          <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
             <i data-lucide="settings" class="w-3.5 h-3.5 mr-1"></i>プロファイル条件を変更
           </button>
         </div>
@@ -582,7 +599,7 @@
       </div>
     </section>
 
-    <!-- 5. 納税・控除シミュレーション タブ（表示特化） -->
+    <!-- 5. 納税・控除シミュレーション タブ -->
     <section id="tab-tax" class="hidden space-y-6">
       <div class="apple-card p-5">
         <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-4">
@@ -590,7 +607,7 @@
             <h2 class="font-bold text-slate-900 dark:text-white text-base">納税・所得控除シミュレーション</h2>
             <p class="text-xs text-slate-400 mt-0.5">プロファイル設定の年収・iDeCo・家族構成から手取りと控除枠を算出</p>
           </div>
-          <button onclick="switchTab('profile')" class="text-xs text-blue-600 font-semibold hover:underline flex items-center">
+          <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
             <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1"></i>年収・控除を変更
           </button>
         </div>
@@ -628,7 +645,7 @@
       </div>
     </section>
 
-    <!-- 6. 出口戦略・将来推移 タブ（表示特化） -->
+    <!-- 6. 出口戦略・将来推移 タブ -->
     <section id="tab-exit" class="hidden space-y-6">
       <div class="apple-card p-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-black/5 dark:border-white/10 mb-4 gap-2">
@@ -639,7 +656,7 @@
             </div>
             <p class="text-xs text-slate-400 mt-0.5">最新残高（約2,619万円）から60歳までの複利成長（年5%・月25万積立）と4%取崩しをシミュレート</p>
           </div>
-          <button onclick="switchTab('profile')" class="text-xs text-blue-600 font-semibold hover:underline flex items-center">
+          <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
             <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1"></i>シミュレーション条件を変更
           </button>
         </div>
@@ -653,8 +670,8 @@
             <span class="text-xs font-bold text-blue-900 dark:text-blue-300 block">50歳到達時（サイドFIRE目安）</span>
             <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white" id="exitSim50Asset">¥109,648,897</div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              年4%取崩し: <span class="font-bold text-blue-600" id="exitSim50Yearly">¥4,385,955</span> /年
-              （月額 約<span class="font-bold text-blue-600" id="exitSim50Monthly">¥365,496</span>）
+              年4%取崩し: <span class="font-bold text-blue-600 dark:text-blue-400" id="exitSim50Yearly">¥4,385,955</span> /年
+              （月額 約<span class="font-bold text-blue-600 dark:text-blue-400" id="exitSim50Monthly">¥365,496</span>）
             </div>
             <p class="text-[10px] text-slate-400 mt-1">※インフレ調整後の実質月額は約<span id="exitSim50RealMonthly">¥276,989</span>相当</p>
           </div>
@@ -663,8 +680,8 @@
             <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300 block">60歳到達時（完全リタイア目安）</span>
             <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white" id="exitSim60Asset">¥241,495,963</div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              年4%取崩し: <span class="font-bold text-emerald-600" id="exitSim60Yearly">¥9,659,838</span> /年
-              （月額 約<span class="font-bold text-emerald-600" id="exitSim60Monthly">¥804,986</span>）
+              年4%取崩し: <span class="font-bold text-emerald-600 dark:text-emerald-400" id="exitSim60Yearly">¥9,659,838</span> /年
+              （月額 約<span class="font-bold text-emerald-600 dark:text-emerald-400" id="exitSim60Monthly">¥804,986</span>）
             </div>
             <p class="text-[10px] text-slate-400 mt-1">※公的年金（月額約<span id="exitPensionMonthlyDisplay">16</span>万円）がさらに加算されます</p>
           </div>
@@ -672,9 +689,9 @@
       </div>
     </section>
 
-    <!-- 7. 外観設定・その他（利用規約） タブ -->
+    <!-- 7. 外観・設定・利用規約 タブ -->
     <section id="tab-settings" class="hidden space-y-6">
-      <!-- ダークモード切替 -->
+      <!-- 外観テーマ設定 -->
       <div class="apple-card p-5">
         <div class="flex justify-between items-center">
           <div class="flex items-center space-x-3">
@@ -686,9 +703,27 @@
               <p class="text-xs text-slate-400">ライトモード / ダークモードを切り替えます</p>
             </div>
           </div>
-          <button onclick="toggleDarkMode()" id="themeToggleBtn" class="px-4 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 text-slate-800 dark:text-zinc-200 rounded-xl text-xs font-semibold transition flex items-center">
-            <i data-lucide="sun" class="w-4 h-4 mr-1.5 text-amber-500"></i>ダークモードへ
+          <button onclick="toggleDarkMode()" id="themeToggleBtn" class="px-4 py-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded-xl text-xs font-semibold transition flex items-center border border-black/5 dark:border-white/10">
+            <i data-lucide="moon" class="w-4 h-4 mr-1.5"></i>ダークモードへ
           </button>
+        </div>
+      </div>
+
+      <!-- PWA・ホーム画面追加ガイド -->
+      <div class="apple-card p-5 space-y-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center">
+            <i data-lucide="download" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-base">スマホ・アプリインストール対応 (PWA)</h3>
+            <p class="text-xs text-slate-400">ホーム画面に追加してフルスクリーン単独アプリとして利用可能</p>
+          </div>
+        </div>
+        <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-zinc-800/40 p-3 rounded-xl border border-black/5 dark:border-white/10 space-y-1.5">
+          <p><strong>・iPhone (Safari) の場合:</strong> 画面下部の共有ボタン（四角から上矢印）をタップし、メニューから<strong>「ホーム画面に追加」</strong>を選択します。</p>
+          <p><strong>・Android (Chrome) の場合:</strong> 右上の3点メニューから<strong>「アプリをインストール」</strong>または<strong>「ホーム画面に追加」</strong>をタップします。</p>
+          <p class="text-[11px] text-slate-400 mt-1">※ホーム画面に追加すると、URLバーのない全画面アプリとして起動します。</p>
         </div>
       </div>
 
@@ -697,7 +732,7 @@
         <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center">
           <i data-lucide="shield-alert" class="w-4 h-4 mr-2 text-blue-600"></i>利用規約および免責事項
         </h3>
-        <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 max-h-48 overflow-y-auto p-3 bg-slate-50 dark:bg-zinc-800/40 rounded-xl">
+        <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed space-y-2 max-h-48 overflow-y-auto p-3 bg-slate-50 dark:bg-zinc-800/40 rounded-xl border border-black/5 dark:border-white/10">
           <p><strong>1. 本ツールの性質と投資助言規制について</strong><br>本アプリケーションは、個人が自身の家計および金融資産状況を可視化・試算するためのシミュレーションツールです。金融商品取引法に基づく「投資助言業」に該当するものではなく、特定の有価証券の購入や投資方針の決定を推奨・勧誘するものではありません。</p>
           <p><strong>2. データの機密性とセキュリティ</strong><br>入力された口座残高、個人年収、家族構成などのデータは、すべて利用者の端末内（ブラウザのLocalStorage）および画面表示されるQRコード内にのみ保存されます。外部サーバー等へ送信・収集されることは一切ありません。</p>
           <p><strong>3. 免責条項</strong><br>シミュレーションの計算結果（将来資産推移、4%取崩し額、節税額、ふるさと納税上限額等）は、一定の仮定に基づく推計であり、将来の運用成果や税務上の正確性を保証するものではありません。投資判断および実際の納税申告はご自身の責任において行ってください。</p>
@@ -711,8 +746,8 @@
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-black/5 dark:border-white/10">
     <div class="max-w-md mx-auto grid grid-cols-6 h-16">
       <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center justify-center text-blue-600 transition">
-        <i data-lucide="layout-dashboard" class="w-5 h-5 mb-1"></i>
-        <span class="text-[9px] font-bold">概観</span>
+        <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+        <span class="text-[9px] font-bold">ホーム</span>
       </button>
       <button onclick="switchTab('update')" id="nav-update" class="flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 transition">
         <i data-lucide="edit" class="w-5 h-5 mb-1"></i>
@@ -739,6 +774,19 @@
 
   <!-- JavaScript アプリケーションロジック -->
   <script>
+    // --- PWA Service Worker 登録 (Blobインライン対応) ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swContent = `
+          self.addEventListener('install', e => self.skipWaiting());
+          self.addEventListener('activate', e => clients.claim());
+          self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+        `;
+        const blob = new Blob([swContent], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log('SW Reg Fail:', err));
+      });
+    }
+
     // --- 実データ初期値（資産まとめ.xlsx 完全連動） ---
     const INITIAL_ACCOUNTS = [
       { id: "inv_1", name: "積み立てNISA", type: "securities", owner: "self", balance: 4994474 },
@@ -876,15 +924,18 @@
     }
 
     function applyTheme() {
+      const icon = document.getElementById('headerThemeIcon');
+      const btn = document.getElementById('themeToggleBtn');
       if (appState.isDarkMode) {
         document.body.classList.add('dark');
-        const btn = document.getElementById('themeToggleBtn');
+        if (icon) icon.setAttribute('data-lucide', 'sun');
         if (btn) btn.innerHTML = '<i data-lucide="sun" class="w-4 h-4 mr-1.5 text-amber-400"></i>ライトモードへ';
       } else {
         document.body.classList.remove('dark');
-        const btn = document.getElementById('themeToggleBtn');
+        if (icon) icon.setAttribute('data-lucide', 'moon');
         if (btn) btn.innerHTML = '<i data-lucide="moon" class="w-4 h-4 mr-1.5 text-slate-700"></i>ダークモードへ';
       }
+      lucide.createIcons();
     }
 
     function toggleDarkMode() {
@@ -892,7 +943,6 @@
       applyTheme();
       saveStateToLocal();
       updateDashboard();
-      lucide.createIcons();
     }
 
     function switchTab(tabKey) {
@@ -900,18 +950,37 @@
       tabs.forEach(t => {
         const el = document.getElementById(`tab-${t}`);
         const nav = document.getElementById(`nav-${t}`);
+        const desk = document.getElementById(`desk-${t}`);
+
         if (t === tabKey) {
           if (el) el.classList.remove('hidden');
-          if (nav) { nav.classList.add('text-blue-600'); nav.classList.remove('text-slate-400'); }
+          if (nav) {
+            nav.classList.add('text-blue-600', 'dark:text-blue-400');
+            nav.classList.remove('text-slate-400');
+          }
+          if (desk) {
+            desk.classList.add('bg-white', 'dark:bg-zinc-700', 'text-blue-600', 'dark:text-white', 'shadow-xs');
+            desk.classList.remove('text-slate-600', 'dark:text-zinc-300');
+          }
         } else {
           if (el) el.classList.add('hidden');
-          if (nav) { nav.classList.remove('text-blue-600'); nav.classList.add('text-slate-400'); }
+          if (nav) {
+            nav.classList.remove('text-blue-600', 'dark:text-blue-400');
+            nav.classList.add('text-slate-400');
+          }
+          if (desk) {
+            desk.classList.remove('bg-white', 'dark:bg-zinc-700', 'text-blue-600', 'dark:text-white', 'shadow-xs');
+            desk.classList.add('text-slate-600', 'dark:text-zinc-300');
+          }
         }
       });
+
+      if (tabKey === 'dashboard') updateDashboard();
       if (tabKey === 'exit') renderExitStrategy();
       if (tabKey === 'ai') renderAiDiagnosis();
       if (tabKey === 'tax') renderTaxCalculations();
       lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function toggleHouseholdMode(isHousehold) {
@@ -1038,7 +1107,7 @@
       });
 
       const activeHist = getActiveHistory();
-      const labels = activeHist.map(h => h.date.substring(2)); // '23/06/08'
+      const labels = activeHist.map(h => h.date.substring(2));
       const dataPoints = activeHist.map(h => Math.round(h.total / 10000));
       document.getElementById('chartPointCountBadge').innerText = `全${labels.length}回の記録`;
 
@@ -1270,7 +1339,6 @@
       });
 
       const p = appState.profile;
-      const totalIncome = p.incomeSelf + (appState.isHouseholdMode ? p.incomeSpouse : 0);
       const assetInMan = Math.round(totalAsset / 10000);
 
       let pct = 93;
@@ -1372,7 +1440,7 @@
       document.getElementById('taxFurusatoTotal').innerText = formatCurrency(selfLimit + spouseLimit);
 
       const yearlyIdeco = p.idecoMonthly * 12;
-      const idecoTaxSaving = Math.round(yearlyIdeco * 0.30); // 所得税20%+住民税10%
+      const idecoTaxSaving = Math.round(yearlyIdeco * 0.30);
       document.getElementById('taxIdecoSavings').innerText = formatCurrency(idecoTaxSaving);
     }
 
@@ -1571,14 +1639,15 @@
         }
       }
 
-      lucide.createIcons();
-      updateDashboard();
+      // ホーム画面を初期表示
+      switchTab('dashboard');
       renderConfigTable();
       renderDirectInputForm();
       renderHistoryTable();
       renderAiDiagnosis();
       renderTaxCalculations();
       renderExitStrategy();
+      lucide.createIcons();
     });
   </script>
 </body>
