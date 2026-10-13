@@ -62,7 +62,7 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     }
 
-    /* セーフエリア対応ヘッダー（インカメラ・ノッチ・ダイナミックアイランド対策） */
+    /* セーフエリア対応ヘッダー（インカメラ・パンチホール重なり防止） */
     header {
       padding-top: max(env(safe-area-inset-top, 0px), 12px);
     }
@@ -118,7 +118,7 @@
 </head>
 <body class="selection:bg-blue-100 selection:text-blue-900 transition-colors duration-200">
 
-  <!-- ヘッダー（スマホインカメラ対応セーフエリアパディング付き） -->
+  <!-- ヘッダー（インカメラ対応セーフエリアパディング） -->
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-4 md:px-6 pb-2.5">
     <div class="max-w-5xl mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('dashboard')">
@@ -190,7 +190,6 @@
         </p>
       </div>
 
-      <!-- QRコード描画エリア -->
       <div class="bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-inner flex flex-col items-center justify-center">
         <canvas id="qrCodeCanvas" class="w-60 h-60 rounded-lg bg-white"></canvas>
         <span class="text-[11px] font-semibold text-slate-600 mt-2 flex items-center">
@@ -198,7 +197,6 @@
         </span>
       </div>
 
-      <!-- 文字列コピーボタン -->
       <div class="space-y-2 text-left">
         <button onclick="copyCurrentSyncString()" class="w-full bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center border border-blue-200/60 dark:border-blue-700/50">
           <i data-lucide="copy" class="w-3.5 h-3.5 mr-1.5"></i>同期テキストをコピー（Teams送信用）
@@ -323,7 +321,7 @@
           <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-3">
             <div class="flex items-center space-x-2">
               <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-              <h3 class="font-bold text-slate-900 dark:text-white text-sm">証券口座・投資資産（計6口座）</h3>
+              <h3 class="font-bold text-slate-900 dark:text-white text-sm">証券口座・投資資産</h3>
             </div>
             <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300" id="badgeInvestSum">¥19,884,374</span>
           </div>
@@ -334,7 +332,7 @@
           <div class="flex justify-between items-center pb-3 border-b border-black/5 dark:border-white/10 mb-3">
             <div class="flex items-center space-x-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <h3 class="font-bold text-slate-900 dark:text-white text-sm">銀行預金・現金資産（計5口座）</h3>
+              <h3 class="font-bold text-slate-900 dark:text-white text-sm">銀行預金・現金資産</h3>
             </div>
             <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300" id="badgeCashSum">¥6,624,539</span>
           </div>
@@ -381,7 +379,7 @@
               <span>口座残高の直接更新</span>
               <span class="ml-2 text-[10px] bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold" id="inputFormModeBadge">単身データへ保存</span>
             </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">数値を入力すると自動保存されます。「記録日として保存」で日付履歴にも追加されます。</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">数値を入力すると即時自動保存されます。「記録日として保存」で日付履歴にも追加されます。</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <div class="flex items-center space-x-1.5 bg-slate-50 dark:bg-zinc-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 max-w-[160px]">
@@ -454,34 +452,34 @@
       </div>
     </section>
 
-    <!-- 3. AI資産診断・相談 レポート タブ -->
+    <!-- 3. AI資産診断・相談 レポート タブ（世帯ベース主軸＋単身補助） -->
     <section id="tab-ai" class="hidden space-y-6">
-      <!-- 資産ポジション -->
+      <!-- 資産ポジション（世帯/単身の比較） -->
       <div class="apple-card p-5">
-        <div class="flex justify-between items-center mb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-black/5 dark:border-white/10 mb-3 gap-2">
           <div>
-            <h2 class="font-bold text-slate-900 dark:text-white text-base">同世代（30代後半）における資産ポジション</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">金融広報中央委員会 家計の金融行動に関する世論調査 統計比較</p>
+            <h2 class="font-bold text-slate-900 dark:text-white text-base">同世代における資産ポジション（世帯基準）</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">金融広報中央委員会「家計の金融行動に関する世論調査（二人以上世帯）」統計比較</p>
           </div>
-          <span class="px-2.5 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-full border border-amber-200 dark:border-amber-700" id="aiPositionBadge">
-            上位 約7%（アッパーマス層）
+          <span class="self-start sm:self-auto px-2.5 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-full border border-amber-200 dark:border-amber-700" id="aiPositionBadge">
+            世帯上位 約6%（アッパーマス目前）
           </span>
         </div>
         <div class="w-full bg-slate-100 dark:bg-zinc-800 h-3.5 rounded-full overflow-hidden relative">
-          <div id="aiPositionBar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-700" style="width: 93%;"></div>
+          <div id="aiPositionBar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 h-full rounded-full transition-all duration-700" style="width: 94%;"></div>
         </div>
-        <div class="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">
-          <span>同世代 中央値: 約300万円</span>
-          <span>同世代 平均値: 約750万円</span>
-          <span class="text-blue-600 dark:text-blue-400 font-bold" id="aiCurrentAssetPositionText">現在: 約2,651万円 (上位7%)</span>
+        <div class="flex flex-wrap justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium gap-1">
+          <span>30代世帯 中央値: 約400万円</span>
+          <span>30代世帯 平均値: 約890万円</span>
+          <span class="text-purple-600 dark:text-purple-400 font-bold" id="aiCurrentAssetPositionText">世帯現在: 約2,951万円 (上位6%)</span>
         </div>
       </div>
 
-      <!-- 詳細AI診断カード群 -->
+      <!-- 詳細AI診断カード群（世帯ベース評価＋単身補助） -->
       <div class="apple-card p-5 space-y-4">
         <div class="flex justify-between items-center">
           <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center">
-            <i data-lucide="brain-circuit" class="w-4 h-4 mr-2 text-blue-600"></i>AI総合診断レポート
+            <i data-lucide="brain-circuit" class="w-4 h-4 mr-2 text-blue-600"></i>AI総合診断レポート（世帯ベース主軸評価）
           </h3>
           <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
             <i data-lucide="settings" class="w-3.5 h-3.5 mr-1"></i>設定条件を変更
@@ -539,7 +537,7 @@
             </h4>
             <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
               ・<strong>全額所得控除:</strong> iDeCoの掛金（月20,000円＝年24万円）は課税所得から全額差し引かれます。<br>
-              ・年収850万円の場合、限界税率は<strong>所得税20%＋住民税10%＝約30%</strong>となるため、年間約7.2万円（24万×30%）の手取りが直接増えます。<br>
+              ・年収850万円の場合、限界税率は<strong>所得税20%＋住民税10%＝約30%</strong>となるため、年間約7.2万円の手取りが直接増えます。<br>
               ・運用益も非課税（通常20.315%免除）で、受取時も退職所得控除の対象となります。
             </p>
           </div>
@@ -550,14 +548,14 @@
             </h4>
             <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
               ・<strong>住宅借入金等特別控除:</strong> 年末残高の0.7%が税額控除されます。所得税から引ききれない場合、<strong>翌年の住民税から最高9.75万円/年</strong>まで差し引かれます。<br>
-              ・<strong>ワンストップ特例 vs 確定申告:</strong> 住宅ローン控除初年度や医療費控除等で確定申告をする場合、ふるさと納税のワンストップ申請は無効になるため、必ず申告書内に寄附金受領証を合算してください。
+              ・<strong>ワンストップ特例 vs 確定申告:</strong> 確定申告を行う場合はワンストップ特例が無効になるため、必ず申告書内に寄附金受領証を合算してください。
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 5. 出口戦略・将来推移 タブ -->
+    <!-- 5. 出口戦略・将来推移 タブ（実績値 ＆ 計算値の完全対比） -->
     <section id="tab-exit" class="hidden space-y-6">
       <div class="apple-card p-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-black/5 dark:border-white/10 mb-4 gap-2">
@@ -566,33 +564,69 @@
               <h2 class="font-bold text-slate-900 dark:text-white text-base">将来資産推移 & 出口戦略シミュレーション</h2>
               <span class="text-[10px] bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full" id="exitCurrentModeBadge">単身資産連動</span>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">最新残高（約2,651万円）から60歳までの複利成長と4%取崩しをシミュレート</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">現在の「実績値」と60歳までの「計算値（4%取崩し推計）」を対比して検証</p>
           </div>
           <button onclick="switchTab('profile')" class="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center">
             <i data-lucide="sliders" class="w-3.5 h-3.5 mr-1"></i>シミュレーション条件を変更
           </button>
         </div>
 
+        <!-- A. 現在の「実績値」ブロック（モード切替連動） -->
+        <div class="mb-5 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/50 border border-black/5 dark:border-white/10">
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center">
+              <i data-lucide="check-square" class="w-4 h-4 mr-1.5 text-blue-600"></i>現在の実績値（起点データ）
+            </span>
+            <span class="text-[10px] text-slate-400 font-medium" id="exitActualDateBadge">2026/10/13 実績</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-white dark:bg-zinc-800 p-2.5 rounded-xl border border-black/5 dark:border-white/5">
+              <span class="text-[10px] text-slate-500 block" id="exitActualInvestLabel">投資資産 実績</span>
+              <span class="font-extrabold text-blue-600 dark:text-blue-400 text-sm" id="exitActualInvestVal">¥19,884,374</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 p-2.5 rounded-xl border border-black/5 dark:border-white/5">
+              <span class="text-[10px] text-slate-500 block" id="exitActualCashLabel">現預金 実績</span>
+              <span class="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm" id="exitActualCashVal">¥6,624,539</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 p-2.5 rounded-xl border border-black/5 dark:border-white/5">
+              <span class="text-[10px] text-slate-500 block" id="exitActualTotalLabel">総純資産 実績</span>
+              <span class="font-extrabold text-slate-900 dark:text-white text-sm" id="exitActualTotalVal">¥26,508,913</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-800 p-2.5 rounded-xl border border-black/5 dark:border-white/5">
+              <span class="text-[10px] text-slate-500 block" id="exitActualPensionLabel">公的年金 見込月額</span>
+              <span class="font-extrabold text-purple-600 dark:text-purple-400 text-sm" id="exitActualPensionVal">¥160,000 /月</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- B. チャート表示エリア -->
         <div class="relative h-72 mb-6">
           <canvas id="exitProjectionChart"></canvas>
         </div>
 
+        <!-- C. 将来の「計算値・シミュレーション」ブロック -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-            <span class="text-xs font-bold text-blue-900 dark:text-blue-300 block">50歳到達時（サイドFIRE目安）</span>
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-blue-900 dark:text-blue-300">50歳到達時（計算推計値）</span>
+              <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">サイドFIRE目安</span>
+            </div>
             <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white" id="exitSim50Asset">¥109,648,897</div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              年4%取崩し: <span class="font-bold text-blue-600 dark:text-blue-400" id="exitSim50Yearly">¥4,385,955</span> /年
+              年4%取崩し計算値: <span class="font-bold text-blue-600 dark:text-blue-400" id="exitSim50Yearly">¥4,385,955</span> /年
               （月額 約<span class="font-bold text-blue-600 dark:text-blue-400" id="exitSim50Monthly">¥365,496</span>）
             </div>
             <p class="text-[10px] text-slate-400 mt-1">※インフレ調整後の実質月額は約<span id="exitSim50RealMonthly">¥276,989</span>相当</p>
           </div>
 
           <div class="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
-            <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300 block">60歳到達時（完全リタイア目安）</span>
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300">60歳到達時（計算推計値）</span>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">完全リタイア目安</span>
+            </div>
             <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white" id="exitSim60Asset">¥241,495,963</div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              年4%取崩し: <span class="font-bold text-emerald-600 dark:text-emerald-400" id="exitSim60Yearly">¥9,659,838</span> /年
+              年4%取崩し計算値: <span class="font-bold text-emerald-600 dark:text-emerald-400" id="exitSim60Yearly">¥9,659,838</span> /年
               （月額 約<span class="font-bold text-emerald-600 dark:text-emerald-400" id="exitSim60Monthly">¥804,986</span>）
             </div>
             <p class="text-[10px] text-slate-400 mt-1">※公的年金（月額約<span id="exitPensionMonthlyDisplay">16</span>万円）がさらに加算されます</p>
@@ -843,7 +877,7 @@
       });
     }
 
-    // --- ストレージ永続化リクエスト（iOS/Chromeの自動クリーンアップ対策） ---
+    // --- ストレージ永続化リクエスト ---
     if (navigator.storage && navigator.storage.persist) {
       navigator.storage.persist().then(persistent => {
         console.log("Storage persistence:", persistent ? "granted" : "not granted");
@@ -1014,7 +1048,7 @@
       }
     }
 
-    // 設定画面のフォームへstateを反映（上書き事故の防止）
+    // 設定画面のフォームへstateを反映
     function syncProfileToForm() {
       const p = appState.profile;
       const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -1286,7 +1320,7 @@
       });
     }
 
-    // 口座入力欄の即時更新ハンドラ（入力即時自動保存）
+    // 口座残高の即時変更ハンドラ
     function onAccountBalanceChange(accId, rawVal) {
       const acc = appState.accounts.find(a => a.id === accId);
       if (acc) {
@@ -1523,59 +1557,87 @@
       reader.readAsText(file);
     }
 
-    // --- AI診断レポート描画 ---
+    // --- AI診断レポート描画（世帯ベース主軸 ＋ 単身補助） ---
     function renderAiDiagnosis() {
-      const active = appState.accounts.filter(a => appState.isHouseholdMode ? true : a.owner === 'self');
-      let totalAsset = 0;
-      let cashTotal = 0;
-      active.forEach(a => {
-        totalAsset += a.balance;
-        if (a.type === 'bank') cashTotal += a.balance;
+      // 本人単身データ算出
+      let selfTotal = 0;
+      let selfCash = 0;
+      appState.accounts.filter(a => a.owner === 'self').forEach(a => {
+        selfTotal += a.balance;
+        if (a.type === 'bank') selfCash += a.balance;
+      });
+
+      // 世帯データ算出
+      let houseTotal = 0;
+      let houseCash = 0;
+      appState.accounts.forEach(a => {
+        houseTotal += a.balance;
+        if (a.type === 'bank') houseCash += a.balance;
       });
 
       const p = appState.profile;
-      const assetInMan = Math.round(totalAsset / 10000);
+      const houseAssetInMan = Math.round(houseTotal / 10000);
+      const selfAssetInMan = Math.round(selfTotal / 10000);
 
-      let pct = 93;
-      let layerName = "アッパーマス層";
-      if (totalAsset >= 100000000) { pct = 99; layerName = "富裕層"; }
-      else if (totalAsset >= 50000000) { pct = 97; layerName = "準富裕層"; }
-      else if (totalAsset >= 30000000) { pct = 95; layerName = "アッパーマス層上位"; }
+      // 世帯基準のパーセンタイル
+      let pct = 94;
+      let layerName = "アッパーマス層目前";
+      if (houseTotal >= 100000000) { pct = 99; layerName = "富裕層"; }
+      else if (houseTotal >= 50000000) { pct = 97; layerName = "準富裕層"; }
+      else if (houseTotal >= 30000000) { pct = 95; layerName = "アッパーマス層"; }
 
       const bar = document.getElementById('aiPositionBar');
       if (bar) bar.style.width = `${pct}%`;
       const badge = document.getElementById('aiPositionBadge');
-      if (badge) badge.innerText = `上位 約${100 - pct}%（${layerName}）`;
+      if (badge) badge.innerText = `世帯上位 約${100 - pct}%（${layerName}）`;
       const posText = document.getElementById('aiCurrentAssetPositionText');
-      if (posText) posText.innerText = appState.isMasked ? `現在: ¥•••••• (上位${100 - pct}%)` : `現在: 約${assetInMan.toLocaleString()}万円 (上位${100 - pct}%)`;
+      if (posText) {
+        posText.innerText = appState.isMasked
+          ? `世帯現在: ¥•••••• (上位${100 - pct}%) / 単身: ¥••••••`
+          : `世帯現在: 約${houseAssetInMan.toLocaleString()}万円 (上位${100 - pct}%) / 本人単身: 約${selfAssetInMan.toLocaleString()}万円`;
+      }
 
-      // アドバイスカード
+      // 3大診断カード（世帯ベース主記載 ＋ 単身補助）
       const cards = document.getElementById('aiAdviceCards');
       if (cards) {
         cards.innerHTML = `
-          <div class="p-3.5 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 space-y-1">
+          <!-- 1. 資産形成ペース評価（世帯ベース主軸） -->
+          <div class="p-3.5 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 space-y-1.5">
             <span class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center">
-              <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 text-blue-600"></i>資産形成ペース評価
+              <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 text-blue-600"></i>資産形成ペース評価（世帯ベース）
             </span>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              36歳時点で純資産2,650万円超は、同世代の上位7%以内に位置します。年間300万円の積立ペースを継続すれば、38歳前後でのアッパーマス層（3,000万円）到達は確実です。
+            <p class="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+              30代後半で世帯総資産<strong>約${houseAssetInMan.toLocaleString()}万円</strong>を達成。30代二人以上世帯の上位6%以内に位置し、アッパーマス層（3,000万円）到達まであと約${(3000 - houseAssetInMan > 0 ? (3000 - houseAssetInMan) : 0)}万円と目前です。
             </p>
+            <div class="pt-1 border-t border-blue-200/50 dark:border-blue-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+              <strong class="text-blue-600 dark:text-blue-400">単身向け補助:</strong> 本人単独でも約${selfAssetInMan.toLocaleString()}万円を保有し、単身同世代でも上位7%の強固な資産形成力を誇ります。
+            </div>
           </div>
-          <div class="p-3.5 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 space-y-1">
+
+          <!-- 2. 生活防衛資金の盤石さ（世帯ベース主軸） -->
+          <div class="p-3.5 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800 space-y-1.5">
             <span class="text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center">
-              <i data-lucide="shield" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>生活防衛資金の盤石さ
+              <i data-lucide="shield" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i>生活防衛資金の盤石さ（世帯ベース）
             </span>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              目標現金水準700万円に対して現在約662万円の安全資産を確保。相場急落時にも取り崩すことなく運用を完全継続できる十分なクッションです。
+            <p class="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+              世帯安全資金として<strong>約${Math.round(houseCash / 10000).toLocaleString()}万円</strong>を確保。住居費含む世帯生活費（月約30〜35万円想定）に対し、約24〜28ヶ月分（2年以上）の強固な防衛資金を保持しています。
             </p>
+            <div class="pt-1 border-t border-emerald-200/50 dark:border-emerald-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+              <strong class="text-emerald-600 dark:text-emerald-400">単身向け補助:</strong> 本人保有現金のみでも約${Math.round(selfCash / 10000).toLocaleString()}万円あり、単身防衛目標（700万円）に対して94.6%充足しています。
+            </div>
           </div>
-          <div class="p-3.5 bg-purple-50/50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800 space-y-1">
+
+          <!-- 3. 新NISA・持株会最適化 -->
+          <div class="p-3.5 bg-purple-50/50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800 space-y-1.5">
             <span class="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center">
               <i data-lucide="target" class="w-3.5 h-3.5 mr-1 text-purple-600"></i>新NISA・持株会最適化
             </span>
-            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              持株会（約451万円）およびNISA枠（約529万円）が順調に伸長。年間300万円枠を優先して最速で非課税枠1,800万円を充足させるのが複利最大化の鍵です。
+            <p class="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+              持株会（約451万円）およびNISA枠（約529万円）が順調に伸長。年間300万円の積立枠を優先配分し、最速で非課税枠1,800万円を充足させることが世帯複利の最大化に繋がります。
             </p>
+            <div class="pt-1 border-t border-purple-200/50 dark:border-purple-800/50 text-[10px] text-slate-500 dark:text-slate-400">
+              配偶者NISA枠もフル活用することで、世帯合計3,600万円の非課税投資枠を有効に使い切ることが可能です。
+            </div>
           </div>
         `;
       }
@@ -1591,11 +1653,11 @@
 
         eduBox.innerHTML = `
           <h4 class="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center mb-1">
-            <i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5 text-blue-600"></i>お子様の教育資金診断（お子様 ${p.childrenCount}名）
+            <i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5 text-blue-600"></i>お子様の教育資金診断（お子様 ${p.childrenCount}名・世帯診断）
           </h4>
           <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
             選択コース想定総額: 約<strong>${totalEduCost.toLocaleString()}万円</strong>（1人あたり約${perChildCost}万円）。<br>
-            現在の資産規模と毎月積立力があれば、大学進学ピーク時の資金（1人あたり500〜800万円）を生活防衛資金を崩すことなく十分カバー可能です。
+            現在の世帯資産規模と毎月の積立力があれば、大学進学ピーク時の学費資金（1人あたり500〜800万円）を安全現金を崩すことなく十分カバー可能です。
           </p>
         `;
       }
@@ -1609,7 +1671,7 @@
             <i data-lucide="wallet" class="w-4 h-4 mr-1.5 text-emerald-600"></i>公的年金 ＋ 資産取崩しキャッシュフロー
           </h4>
           <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-            65歳以降の公的年金見込額: 月額約<strong>${(totalPension / 10000).toFixed(1)}万円</strong>（世帯合算）。<br>
+            65歳以降の公的年金見込額: 月額約<strong>${(totalPension / 10000).toFixed(1)}万円</strong>（${appState.isHouseholdMode ? '夫婦世帯合算' : '本人単身'}）。<br>
             これに60歳時点の資産運用4%取崩し（月額約30〜80万円相当）が加わるため、老後収支は大幅な黒字となる見通しです。
           </p>
         `;
@@ -1639,22 +1701,38 @@
       document.getElementById('taxIdecoSavings').innerText = formatCurrency(idecoTaxSaving);
     }
 
-    // --- 出口戦略シミュレーション描画 ---
+    // --- 出口戦略シミュレーション描画（実績値 ＆ 計算値の完全対比） ---
     function renderExitStrategy() {
+      // 1. 現在の実績値を取得（モード別）
       const active = appState.accounts.filter(a => appState.isHouseholdMode ? true : a.owner === 'self');
-      let curInvest = 0;
-      let cash = 0;
+      let actualInvest = 0;
+      let actualCash = 0;
       active.forEach(a => {
-        if (a.type === 'securities') curInvest += a.balance;
-        else cash += a.balance;
+        if (a.type === 'securities') actualInvest += a.balance;
+        else actualCash += a.balance;
       });
+      const actualTotal = actualInvest + actualCash;
+      const actualPension = appState.profile.pensionSelf + (appState.isHouseholdMode ? appState.profile.pensionSpouse : 0);
 
+      // 実績値エリアのUI更新
+      const modeText = appState.isHouseholdMode ? '世帯' : '単身';
+      document.getElementById('exitActualInvestLabel').innerText = `${modeText} 投資資産 実績`;
+      document.getElementById('exitActualCashLabel').innerText = `${modeText} 現預金 実績`;
+      document.getElementById('exitActualTotalLabel').innerText = `${modeText} 総純資産 実績`;
+      document.getElementById('exitActualPensionLabel').innerText = `${modeText} 公的年金見込`;
+
+      document.getElementById('exitActualInvestVal').innerText = formatCurrency(actualInvest);
+      document.getElementById('exitActualCashVal').innerText = formatCurrency(actualCash);
+      document.getElementById('exitActualTotalVal').innerText = formatCurrency(actualTotal);
+      document.getElementById('exitActualPensionVal').innerText = formatCurrency(actualPension) + ' /月';
+
+      // 2. 将来のシミュレーション計算値を算出
       const r = appState.profile.returnRate / 100;
       const invStart = appState.profile.investYearly;
       const invStep = 200000;
       const inf = 0.02;
 
-      let currentInvest = curInvest;
+      let currentInvest = actualInvest;
       let nominalTotals = [];
       let realTotals = [];
       let labels = [];
@@ -1670,7 +1748,7 @@
         if (age > 36) {
           currentInvest = currentInvest * (1 + r) + yearlyInvest;
         }
-        let totalNominal = currentInvest + cash;
+        let totalNominal = currentInvest + actualCash;
         let inflationFactor = Math.pow(1 + inf, age - 36);
         let totalReal = totalNominal / inflationFactor;
 
@@ -1690,9 +1768,9 @@
       document.getElementById('exitSim60Yearly').innerText = formatCurrency(asset60 * 0.04);
       document.getElementById('exitSim60Monthly').innerText = formatCurrency((asset60 * 0.04) / 12);
 
-      const totalPen = appState.profile.pensionSelf + (appState.isHouseholdMode ? appState.profile.pensionSpouse : 0);
-      document.getElementById('exitPensionMonthlyDisplay').innerText = appState.isMasked ? '••' : (totalPen / 10000).toFixed(0);
+      document.getElementById('exitPensionMonthlyDisplay').innerText = appState.isMasked ? '••' : (actualPension / 10000).toFixed(0);
 
+      // チャート描画
       const ctxExit = document.getElementById('exitProjectionChart').getContext('2d');
       if (exitChart) exitChart.destroy();
       exitChart = new Chart(ctxExit, {
@@ -1701,10 +1779,10 @@
           labels: labels,
           datasets: [
             {
-              label: '名目資産 (万円)',
+              label: `${modeText}名目資産 (万円)`,
               data: nominalTotals,
-              borderColor: '#0071E3',
-              backgroundColor: 'rgba(0, 113, 227, 0.06)',
+              borderColor: appState.isHouseholdMode ? '#9333EA' : '#0071E3',
+              backgroundColor: appState.isHouseholdMode ? 'rgba(147, 51, 234, 0.06)' : 'rgba(0, 113, 227, 0.06)',
               borderWidth: 2.5,
               tension: 0.3
             },
@@ -1842,7 +1920,7 @@
           const toggle = document.getElementById('householdModeToggle');
           if (toggle) toggle.checked = isH;
 
-          // 再読み込み時の無限巻き戻り防止のためURLハッシュを即座に消去
+          // 再読み込み時の巻き戻り防止のためURLハッシュを即座に消去
           history.replaceState(null, null, window.location.pathname + window.location.search);
           saveStateToLocal();
           alert('🎉 スマホ側へ最新資産データを自動同期しました！');
